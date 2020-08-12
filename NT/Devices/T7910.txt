@@ -1,0 +1,14 @@
+PS C:\> Get-NetAdapter | ft -AutoSize                                                                                   
+Name       InterfaceDescription                     ifIndex Status       MacAddress        LinkSpeed
+----       --------------------                     ------- ------       ----------        ---------
+Ethernet 2 Intel(R) Ethernet Connection I217-LM           7 Up           50-9A-4C-55-E5-F9    1 Gbps
+Ethernet   Intel(R) I210 Gigabit Network Connection       5 Disconnected 50-9A-4C-55-EA-7C     0 bps
+
+
+PS C:\> Get-CimInstance -ClassName Win32_Computersystem | ft -AutoSize                                                  
+Name           PrimaryOwnerName Domain TotalPhysicalMemory Model                Manufacturer
+----           ---------------- ------ ------------------- -----                ------------
+MININT-MGMJ6DP sccmman          WO     34277478400         Precision Tower 7910 Dell Inc.
+
+
+PS C:\> 

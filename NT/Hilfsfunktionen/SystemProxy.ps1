@@ -1,0 +1,1 @@
+[System.Environment]::SetEnvironmentVariable("HTTP_PROXY", "HTTP://192.168.1.252:8080/", [System.EnvironmentVariableTarget]::Machine)

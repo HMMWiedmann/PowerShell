@@ -1,0 +1,1 @@
+﻿Get-GPO -All `    | ForEach-Object{         Get-GPOReport -Name $PSItem.Displayname `        -ReportType Html `        -Path "C:\GPODokumentation\$($PSItem.Displayname)-$(Get-Date -Format ddMMyyyy)$(Get-Date -Format HHmm).html"        }

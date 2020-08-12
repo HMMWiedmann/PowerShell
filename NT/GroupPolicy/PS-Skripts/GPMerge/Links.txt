@@ -1,0 +1,3 @@
+https://gallery.technet.microsoft.com/scriptcenter/Copy-and-Merge-Group-918af45a
+
+https://blogs.technet.microsoft.com/ashleymcglone/2015/06/11/updated-copy-and-merge-group-policies-gpos-with-powershell/

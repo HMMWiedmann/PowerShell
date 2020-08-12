@@ -1,0 +1,1 @@
+$Platznummer = $env:COMPUTERNAME.Substring($ENV:COMPUTERNAME.Length - 2)

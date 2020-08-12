@@ -1,0 +1,1 @@
+﻿Invoke-WebRequest -Uri 'https://VCCDSC-01.Mail.Cluster-Center.de:4711/PSDSCPullServer.svc' -UseBasicParsing

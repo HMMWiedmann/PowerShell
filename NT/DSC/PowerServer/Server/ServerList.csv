@@ -1,0 +1,3 @@
+NodeName,	FileServer, 	WebServer, 	RDP, 		Chrome
+VXH2-DSC02,  	Present,	Absent,	        Present,	Present
+VXH2-DSC03,  	Absent,		Present,        Present,	Present

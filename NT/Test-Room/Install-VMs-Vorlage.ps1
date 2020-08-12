@@ -1,0 +1,3 @@
+﻿Install-VMs -Platznummern @("01", "03") `
+            -VMNameStart "VWIN10-" `
+            -ParentdiskPath "C:\HyperV\Parentdisks\WIN10-1809-x64-EE-Gen2.316.vhdx" `            -VMRootFolder "C:\HyperV" `            -CPUCoreCount 2 `            -RAMSizeIngGB 2GB `            -VMSwitchName "EXTERNAL" `            -Differencing $true `            -DoIPConfig $true `            -IPAddressStart "192.168.1." `            -IPAddressEnd "5" `            -DNSAddresses @("192.168.1.201","192.168.2.202") `            -GatewayAddress "192.168.1.254"

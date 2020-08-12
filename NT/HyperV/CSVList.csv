@@ -1,0 +1,3 @@
+VMName, 	Memory, CPU, IPv4,          SubnetPrefix,   DNS1,          	  DNS2,          	DomainName,	    EnabledFirewall,    AddVHDX_Size,  AddVHDX_Type
+VWIN10-04, 	8,      8,   192.168.1.44,  24,             192.168.1.201,      192.168.2.202, 	,               False,              100,           Fixed
+VWIN10-05, 	8,      8,   192.168.1.54,  24,             192.168.1.201,      192.168.2.202, 	,               False,              100,           Dynamic

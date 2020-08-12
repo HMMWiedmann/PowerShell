@@ -1,0 +1,16 @@
+PS C:\> Get-NetAdapter | ft -AutoSize
+
+Name             InterfaceDescription                                ifIndex Status       MacAddress        LinkSpeed
+----             --------------------                                ------- ------       ----------        ---------
+Slot04 x4 Port 2 Intel(R) 82576 Gigabit Dual Port N...#2                   8 Disconnected 00-1B-21-49-05-91     0 bps
+Slot04 x4 Port 1 Intel(R) 82576 Gigabit Dual Port Network Connection       7 Disconnected 00-1B-21-49-05-90     0 bps
+Ethernet         Intel(R) Ethernet Connection I217-LM                      4 Up           64-00-6A-4F-E7-35    1 Gbps
+
+
+PS C:\> Get-CimInstance -ClassName Win32_Computersystem | ft -AutoSize                                                  
+Name     PrimaryOwnerName Domain TotalPhysicalMemory Model                Manufacturer
+----     ---------------- ------ ------------------- -----                ------------
+WIN10-10 sccmman          WO     34277416960         Precision Tower 7810 Dell Inc.
+
+
+PS C:\>

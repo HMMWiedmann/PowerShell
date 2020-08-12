@@ -1,0 +1,3 @@
+﻿Update-VHDX -VHDXPath .\W2K16-Net.35-Gen2-80GB-AW.2879.vhdx -UpdatePath .\14393.2906.windows10.0-kb4493470-x64_2d9533301a1e6b5fb0c1c200df8a060bcc97b7d3.msu -Verbose
+Update-VHDX -VHDXPath .\W2K19-Net.35-Gen2-80GB-AW.404.vhdx -UpdatePath .\17763.437.windows10.0-kb4493509-x64_ec069505eddfb9175e376b7eea773182d06033f0.msu -Verbose 
+Update-VHDX -VHDXPath .\WIN10-1809-x64-EE-Gen2.404.vhdx -UpdatePath .\17763.437.windows10.0-kb4493509-x64_ec069505eddfb9175e376b7eea773182d06033f0.msu -Verbose

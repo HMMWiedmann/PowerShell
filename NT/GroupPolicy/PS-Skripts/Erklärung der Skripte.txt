@@ -1,0 +1,27 @@
+1) checkdcoptions.ps1
+Prüft ob bei den RWDCs die Replikation (ein- oder ausgehend) abgeschaltet wurde
+und schaltet diese wieder ein.
+
+2) checkgporeplication.ps1
+Prüft ob die GPOs zwischen den DCs repliziert sind bzw. zeigt fehlende Policies an.
+Das ist ein Indikator für eine stehengebliebene Sysvol-Replikation
+
+3) checkgposync.ps1
+Prüft ob eine (oder alle) GPOs in sich synchron sind.
+Das ist auch ein Indikator für eine stehengebliebene Sysvol-Replikation
+
+4) checksysvolreplication.ps1
+Prüft ob die Sysvol-Replikation ausgeschaltet wurde.
+Fixed den Zustand und zeigt an wann die Replikation abgeschaltet wurde.
+
+5) adpermissions.ps1
+Mit dem Skript können alle AD Permissions dokumentiert werden
+- dazu zählen auch die Permissions von Group Policy Container Objekten.
+
+6)GPLogError.ps1
+Mit dem Powershell Skript suche ich nach der EventID 7017 (fatal error) 
+und lasse die activityID dazu auswerten.
+
+7)GPActIDGen.ps1
+Dieses Skript holte alle Group Policy 
+- Events aus dem Log eines Domain Members welche eine ActivityID aufweisen.
