@@ -31,15 +31,30 @@ try
     $VMFolders = Get-ChildItem -Path "$($PSDriveName):\" | `
                  Where-Object -Property Name -NE "# Recovery Media" | `
                  Where-Object -Property Name -NE "VeeamConfigBackup" | `
-                 Where-Object -Property Name -NotLike "Backup*"
+                 Where-Object -Property Name -NotLike "Backup*" |
+                 Where-Object -Property Length -EQ $null
     $Date = Get-Date
+
+    $FBItems = @()
+    $IBItems = @()
+
     foreach($VM in $VMFolders)
-    {        
-        $FBItems = Get-ChildItem -Path $VM.FullName -Recurse -Include *.vbk | Sort-Object -Property LastWriteTime -Descending
-        $IBItems = Get-ChildItem -Path $VM.FullName -Recurse -Include *.vib | Sort-Object -Property LastWriteTime -Descending
-    
-        $FBDateDiff = ($Date - $FBItems[0].LastWriteTime).Days
-        $IBDateDiff = ($Date - $IBItems[0].LastWriteTime).Days        
+    {      
+        $FBItems = $FBItems + (Get-ChildItem -Path $VM.FullName -Recurse -Include *.vbk)
+        $IBItems = $IBItems + (Get-ChildItem -Path $VM.FullName -Recurse -Include *.vib)
+
+        $LastFB = ($FBItems | Sort-Object -Property LastWriteTime -Descending -ErrorAction SilentlyContinue)[0].LastWriteTime 
+        $LastIB = ($IBItems | Sort-Object -Property LastWriteTime -Descending -ErrorAction SilentlyContinue)[0].LastWriteTime
+
+        
+        if($null -ne $LastFB)
+        {
+            $FBDateDiff = ($Date - $LastFB).Days
+        }
+        if($null -ne $IBItems)
+        {
+            $IBDateDiff = ($Date - $LastIB).Days
+        }
     }
 
     # Check remaining Size
@@ -62,7 +77,11 @@ try
     Remove-PSDrive $PSDriveName
 }
 catch 
+{    
+    Write-Host "Error: $($PSItem.Exception.Message)"
+    Write-Host  "Item: $($_.Exception.ItemName)"
+}
+finally
 {
     Remove-PSDrive $PSDriveName -ErrorAction SilentlyContinue
-    exit 1001
 }
