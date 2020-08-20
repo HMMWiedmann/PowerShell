@@ -1,4 +1,9 @@
-﻿#Region Hilfsfunktionen
+﻿<# Überlegungen
+    Pagefilegröße festsetzen auf Ram größe, aber maximal 32GB
+    RAM-Dump bei Systemfailure auf Kernal-dump minimieren
+#>
+
+#Region Hilfsfunktionen
 workflow Copy-Parallel
 {
     param 

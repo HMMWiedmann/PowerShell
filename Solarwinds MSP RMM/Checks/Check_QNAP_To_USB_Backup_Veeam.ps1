@@ -15,7 +15,19 @@
     FBDateDiff
     IBDateDiff
     PercentOutput
+
+    Testing: 
+    $BackupNetworkPath    = "\\192.168.162.11\USBDisk1\backup"       
+    $UserName             = "admin"
+    $Password             = "passwort"
+    $TotalDiskSizeInBytes = 4TB
+    $MaxUsedSizeInPercent = 70
 #>
+
+$FBDateDiff
+$IBDateDiff
+
+# Skriptstart ab hier
 
 [string]$UserName
 [System.Security.SecureString]$SecurePassword = ConvertTo-SecureString $Password -AsPlainText -Force
@@ -39,22 +51,21 @@ try
     $IBItems = @()
 
     foreach($VM in $VMFolders)
-    {      
+    {
         $FBItems = $FBItems + (Get-ChildItem -Path $VM.FullName -Recurse -Include *.vbk)
-        $IBItems = $IBItems + (Get-ChildItem -Path $VM.FullName -Recurse -Include *.vib)
+        $IBItems = $IBItems + (Get-ChildItem -Path $VM.FullName -Recurse -Include *.vib)        
+    }
 
-        $LastFB = ($FBItems | Sort-Object -Property LastWriteTime -Descending -ErrorAction SilentlyContinue)[0].LastWriteTime 
-        $LastIB = ($IBItems | Sort-Object -Property LastWriteTime -Descending -ErrorAction SilentlyContinue)[0].LastWriteTime
+    $LastFB = ($FBItems | Sort-Object -Property LastWriteTime -Descending -ErrorAction SilentlyContinue)[0].LastWriteTime 
+    $LastIB = ($IBItems | Sort-Object -Property LastWriteTime -Descending -ErrorAction SilentlyContinue)[0].LastWriteTime
 
-        
-        if($null -ne $LastFB)
-        {
-            $FBDateDiff = ($Date - $LastFB).Days
-        }
-        if($null -ne $IBItems)
-        {
-            $IBDateDiff = ($Date - $LastIB).Days
-        }
+    if($null -ne $LastFB)
+    {
+        $FBDateDiff = ($Date - $LastFB).Days
+    }
+    if($null -ne $IBItems)
+    {
+        $IBDateDiff = ($Date - $LastIB).Days
     }
 
     # Check remaining Size
@@ -74,14 +85,12 @@ try
     Write-Host "Genutzt : $ValueOutput, $PercentOutputString"
     Write-Host "Maximal : $MaxSize"
 
-    Remove-PSDrive $PSDriveName
+    Remove-PSDrive $PSDriveName -ErrorAction SilentlyContinue
 }
 catch 
 {    
     Write-Host "Error: $($PSItem.Exception.Message)"
     Write-Host  "Item: $($_.Exception.ItemName)"
-}
-finally
-{
     Remove-PSDrive $PSDriveName -ErrorAction SilentlyContinue
+    Exit 1001
 }
