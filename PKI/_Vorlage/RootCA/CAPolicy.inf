@@ -1,0 +1,27 @@
+[Version]
+Signature= „$Windows NT$“
+
+[PolicyStatementExtension]
+Policies = LegalPolicy
+Critical = 0
+
+[LegalPolicy]
+OID = 1.3.6.1.4.1.311.21.43
+Notice = „Root CA Legal policy statement“
+URL = „http://pki.mopw-center.de/CertEnroll/rootLegalPolicy.txt“
+
+[certsrv_server]
+renewalkeylength = 4096
+RenewalValidityPeriodUnits = 10
+RenewalValidityPeriod = years
+CRLPeriod = years
+CRLPeriodUnits = 10
+CRLDeltaPeriod = hours
+CRLDeltaPeriodUnits = 0
+DiscreteSignatureAlgorithm = 1
+
+[CRLDistributionPoint]
+URL=http://pki.mopw-center.de/CertEnroll/<CaName><CRLNameSuffix><DeltaCRLAllowed>.crl
+
+[AuthorityInformationAccess]
+URL=http://pki.mopw-center.de/CertEnroll/<ServerDNSName>_<CaName><CertificateName>.crt

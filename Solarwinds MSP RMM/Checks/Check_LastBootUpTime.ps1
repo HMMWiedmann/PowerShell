@@ -5,10 +5,10 @@ $DaysRunning = ((Get-Date) - ($Time).LastBootUpTime).Days
 
 if ($DaysRunning -gt $MaxDaysRunning) 
 {
-    Write-Host "LastBooUptime: $($time.LastBootUpTime | Get-Date -Format "dd/MM/yyyy hh:mm:ss")"
+    Write-Host "LastBootUptime: $($time.LastBootUpTime | Get-Date -Format "dd/MM/yyyy hh:mm:ss")"
     Exit 1001
 }
 else {
-    Write-Host "LastBooUptime: $($time.LastBootUpTime | Get-Date -Format "dd/MM/yyyy hh:mm:ss")"
+    Write-Host "LastBootUptime: $($time.LastBootUpTime | Get-Date -Format "dd/MM/yyyy hh:mm:ss")"
     Exit 0
 }
