@@ -1,4 +1,4 @@
-# $DelteAfterDays = "7" #Days
+# $DelteAfterDays = "14" #Days
 
 #--------------------------------------------------------
 #region Hilfsfunktionen
@@ -37,6 +37,33 @@ Function CleanLogFiles($TargetFolder)
         Write-Host "The folder $TargetFolder doesn't exist! Check the folder path!" -ForegroundColor "red"
     }
 }
+
+function Test-FileLock 
+{
+    param (
+        [parameter(Mandatory=$true)][string]$Path
+    )
+
+    $oFile = New-Object System.IO.FileInfo $Path
+
+    if ((Test-Path -Path $Path) -eq $false) 
+    {
+        return $false
+    }
+
+    try {
+        $oStream = $oFile.Open([System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+
+        if ($oStream) {
+            $oStream.Close()
+        }
+        $false
+    }
+    catch {
+        # file is locked by a process.
+        return $true
+    }
+}
 #endregion
 
 try {
@@ -49,15 +76,22 @@ try {
     foreach ($Website in $Websites)
     {
         $LogFilePath = $Website.LogFile.Directory
-        if ($LogFilePath -match "%SystemDrive%")  
-        {
-            $LogFilePath  = $LogFilePath  -replace "%SystemDrive%","C:"
-        }
 
-        $LogFileList = Get-ChildItem $LogFilePath -Recurse | Where-Object {! $_.PSIsContainer -and $_.lastwritetime -lt $DeleteDate} | Select-Object fullname
-        foreach ($LogFile in $LogFileList)
+        if ((Test-FileLock -Path $LogFilePath) -eq $false) 
         {
-            remove-item $LogFile.fullname
+            if ($LogFilePath -match "%SystemDrive%")  
+            {
+                $LogFilePath  = $LogFilePath  -replace "%SystemDrive%","C:"
+            }
+    
+            $LogFileList = Get-ChildItem $LogFilePath -Recurse | Where-Object {! $_.PSIsContainer -and $_.lastwritetime -lt $DeleteDate} | Select-Object fullname
+            foreach ($LogFile in $LogFileList)
+            {
+                remove-item $LogFile.fullname
+            }
+        }
+        else {
+            Write-Host "$($LogFilePath): Datei gesperrt"
         }
     }    
 
