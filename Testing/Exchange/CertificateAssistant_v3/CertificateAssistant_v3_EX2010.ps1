@@ -407,7 +407,7 @@ if ($DetermineExchangeFQDNs -eq $true)
  Write-ACMELog "Exchange FQDNs" "Info" "Make them unique"
  try
  {
-  $CertNames = $CertNames | select �Unique
+  $CertNames = $CertNames | select -Unique
   if ($CertNames -match ".local" -or $CertNames -match ".intern")
    {
     Write-ACMELog "Exchange FQDNs" "Warning" "Unroutable Domains were found, sorted out"
@@ -613,8 +613,8 @@ try
  {
   [string]$ExchangeServerVersion = (Get-ExchangeServer $env:computername).Admindisplayversion
   Write-ACMELog "Exchange" "Info" "Exchange Server Version: $ExchangeServerVersion"
-  $ImportPassword = ConvertTo-SecureString -String $PFXPasswort -Force �AsPlainText
-  Import-ExchangeCertificate -FileData ([Byte[]]$(Get-Content -Path $CertPath -Encoding byte -ReadCount 0)) -FriendlyName $SANAlias -Password $ImportPassword -PrivateKeyExportable:$true | Enable-ExchangeCertificate -Services "SMTP, IMAP, POP, IIS" �force
+  $ImportPassword = ConvertTo-SecureString -String $PFXPasswort -Force -AsPlainText
+  Import-ExchangeCertificate -FileData ([Byte[]]$(Get-Content -Path $CertPath -Encoding byte -ReadCount 0)) -FriendlyName $SANAlias -Password $ImportPassword -PrivateKeyExportable:$true | Enable-ExchangeCertificate -Services "SMTP, IMAP, POP, IIS" -force
   Write-ACMELog "Exchange" "Info" "Successfully imported and enabled Certificate"
  }
 catch

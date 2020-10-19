@@ -87,7 +87,7 @@ try {
             $LogFileList = Get-ChildItem $LogFilePath -Recurse | Where-Object {! $_.PSIsContainer -and $_.lastwritetime -lt $DeleteDate} | Select-Object fullname
             foreach ($LogFile in $LogFileList)
             {
-                remove-item $LogFile.fullname
+                Remove-Item $LogFile.fullname -ErrorAction SilentlyContinue
             }
         }
         else {
