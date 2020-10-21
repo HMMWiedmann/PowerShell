@@ -2,7 +2,6 @@
     $IPAdress
     $CommunityString
     $Vendor
-    $DiskCount 
 #>
 
 function Convert_hdd_status_to_text
@@ -74,49 +73,73 @@ $AllSNMPData = @{}
 
 switch ($Vendor) 
 {
-    "QNAP" {
-        switch ($DiskCount) 
+    "QNAP" 
+    {
+        [int]$DiskCount = (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.10.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data
+        [int]$VolumeCount = (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.16.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data        
+
+        # HDD Infos
+        $AllSNMPData.Add("hdd_1_smart_info", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.11.1.7.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
+        $AllSNMPData.Add("hdd_1_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.11.1.4.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
+
+        if ($DiskCount -gt 2) 
         {
-            "4"
+            $AllSNMPData.Add("hdd_2_smart_info", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.11.1.7.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
+            $AllSNMPData.Add("hdd_2_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.11.1.4.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
+            
+            if ($DiskCount -eq 4) 
             {
-                # HDD Infos
-                $AllSNMPData.Add("hdd_1_smart_info", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.11.1.7.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("hdd_1_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.11.1.4.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-
-                $AllSNMPData.Add("hdd_2_smart_info", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.11.1.7.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("hdd_2_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.11.1.4.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-
                 $AllSNMPData.Add("hdd_3_smart_info", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.11.1.7.3" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
                 $AllSNMPData.Add("hdd_3_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.11.1.4.3" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-
+        
                 $AllSNMPData.Add("hdd_4_smart_info", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.11.1.7.4" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
                 $AllSNMPData.Add("hdd_4_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.11.1.4.4" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
+            }
+            elseif ($DiskCount -gt 4)
+            {
+                Write-Host "Es gab einen Fehler beim Auslesen der Anzahl der Disks"
+            }
+        }
 
-                # System Infos
-                $AllSNMPData.Add("system_cpu_usage", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.1.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("system_temperature", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.6.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
+        # System Infos
+        $AllSNMPData.Add("system_cpu_usage", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.1.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
+        $AllSNMPData.Add("system_temperature", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.6.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
+        $AllSNMPData.Add("system_model", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.12.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
 
-                # Volume Infos
-                $AllSNMPData.Add("volume_1_free_size_in_KB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.4.1.1.1.2.3.2.1.4.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("volume_1_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.17.1.6.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("volume_1_total_size_in_KB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.4.1.1.1.2.3.2.1.3.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
+        # Volume Infos
+        $AllSNMPData.Add("volume_1_free_size_in_KB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.17.1.5.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
+        $AllSNMPData.Add("volume_1_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.17.1.6.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
+        $AllSNMPData.Add("volume_1_total_size_in_KB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.17.1.4.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
 
-                $AllSNMPData.Add("volume_2_free_size_in_KB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.4.1.1.1.2.3.2.1.4.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("volume_2_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.17.1.6.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("volume_2_total_size_in_KB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.4.1.1.1.2.3.2.1.3.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)                  
-                
-                try 
+        if ($VolumeCount -eq 2) 
+        {
+            $AllSNMPData.Add("volume_2_free_size_in_KB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.17.1.5.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
+            $AllSNMPData.Add("volume_2_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.17.1.6.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
+            $AllSNMPData.Add("volume_2_total_size_in_KB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.17.1.4.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
+        }
+        elseif ($VolumeCount -gt 2)
+        {
+            Write-Host "Es gibt vermutlich mehr als zwei Volumen, bitte pruefen"
+            $ErrorCount++
+        }
+        
+        try 
+        {
+            # HDD Smart info
+            if ($AllSNMPData.hdd_1_smart_info -ne "GOOD") 
+            {
+                Write-Host "hdd_1_smart_info hat einen Fehler gemeldet"
+                $ErrorCount++
+            }
+            if ($DiskCount -gt 2)
+            {
+                if ($AllSNMPData.hdd_2_smart_info -ne "GOOD") 
                 {
-                    if ($AllSNMPData.hdd_1_smart_info -ne "GOOD") 
-                    {
-                        Write-Host "hdd_1_smart_info hat einen Fehler gemeldet"
-                        $ErrorCount++
-                    }
-                    if ($AllSNMPData.hdd_2_smart_info -ne "GOOD") 
-                    {
-                        Write-Host "hdd_2_smart_info hat einen Fehler gemeldet"
-                        $ErrorCount++
-                    }                    
+                    Write-Host "hdd_2_smart_info hat einen Fehler gemeldet"
+                    $ErrorCount++
+                }
+                if ($DiskCount -eq 4) 
+                {
                     if ($AllSNMPData.hdd_3_smart_info -ne "GOOD") 
                     {
                         Write-Host "hdd_3_smart_info hat einen Fehler gemeldet"
@@ -127,17 +150,24 @@ switch ($Vendor)
                         Write-Host "hdd_4_smart_info hat einen Fehler gemeldet"
                         $ErrorCount++
                     }
+                }                
+            }
 
-                    if ($AllSNMPData.hdd_1_status -ne "0") 
-                    {
-                        Write-Host "hdd_1_status hat einen Fehler gemeldet"
-                        $ErrorCount++
-                    }
-                    if ($AllSNMPData.hdd_2_status -ne "0") 
-                    {
-                        Write-Host "hdd_2_status hat einen Fehler gemeldet"
-                        $ErrorCount++
-                    }
+            # HDD Status
+            if ($AllSNMPData.hdd_1_status -ne "0") 
+            {
+                Write-Host "hdd_1_status hat einen Fehler gemeldet"
+                $ErrorCount++
+            }
+            if ($DiskCount -gt 2) 
+            {
+                if ($AllSNMPData.hdd_2_status -ne "0") 
+                {
+                    Write-Host "hdd_2_status hat einen Fehler gemeldet"
+                    $ErrorCount++
+                }            
+                if ($DiskCount -eq 4) 
+                {
                     if ($AllSNMPData.hdd_3_status -ne "0") 
                     {
                         Write-Host "hdd_3_status hat einen Fehler gemeldet"
@@ -148,455 +178,127 @@ switch ($Vendor)
                         Write-Host "hdd_4_status hat einen Fehler gemeldet"
                         $ErrorCount++
                     }
-
-                    if ($null -ne $AllSNMPData.system_cpu_usage)
-                    {
-                        if ([int32]$AllSNMPData.system_cpu_usage -gt 70) 
-                        {
-                            Write-Host "system_cpu_usage hat einen Fehler gemeldet"
-                            $ErrorCount++
-                        }
-                    }
-                    if ($null -ne $AllSNMPData.system_temperature) 
-                    {
-                        if ([int32]$AllSNMPData.system_temperature -gt 50) 
-                        {
-                            Write-Host "system_temperature hat einen Fehler gemeldet"
-                            $ErrorCount++
-                        }
-                    }
-
-                    if (!($AllSNMPData.volume_1_free_size_in_KB -eq "NoSuchObject")) 
-                    {
-                        if ([int64]$AllSNMPData.volume_1_free_size_in_KB -lt 3145728) 
-                        {
-                            Write-Host "Volumen 1 ist fast voll"
-                            $ErrorCount++
-                        }
-                    }
-                    if (!($AllSNMPData.volume_2_total_size_in_KB -eq "NoSuchObject")) 
-                    {
-                        if ([int64]$AllSNMPData.volume_2_free_size_in_KB -lt 3145728) 
-                        {
-                            Write-Host "Volumen 2 ist fast voll"
-                            $ErrorCount++
-                        }
-                    }
-
-                    if ($AllSNMPData.volume_1_status -ne "Ready") 
-                    {
-                        Write-Host "volume_1_status hat einen Fehler gemeldet"
-                        $ErrorCount++
-                    }
-                    if ($AllSNMPData.volume_2_status -ne "Ready") 
-                    {
-                        Write-Host "volume_2_status hat einen Fehler gemeldet"
-                        $ErrorCount++
-                    }
-                }    
-                catch {                
-                    Write-Host $PSItem.Exception.Message
                 }
+            }            
 
-                # Daten ausgeben
-                Write-Host "-----------------------------------------"
-                Write-Host "hdd_1_smart_info : " ($AllSNMPData.hdd_1_smart_info)
-                Write-Host "hdd_1_status : " (Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_1_status)
-                Write-Host "-----------------------------------------"
-                Write-Host "hdd_2_smart_info : " ($AllSNMPData.hdd_2_smart_info)
-                Write-Host "hdd_2_status : " (Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_2_status)
-                Write-Host "-----------------------------------------"
+            # System Status
+            if ($null -ne $AllSNMPData.system_cpu_usage)
+            {
+                if ([int32]$AllSNMPData.system_cpu_usage -gt 70) 
+                {
+                    Write-Host "system_cpu_usage hat einen Fehler gemeldet"
+                    $ErrorCount++
+                }
+            }
+            if ($null -ne $AllSNMPData.system_temperature) 
+            {
+                if ([int32]$AllSNMPData.system_temperature -gt 50) 
+                {
+                    Write-Host "system_temperature hat einen Fehler gemeldet"
+                    $ErrorCount++
+                }
+            }
+
+            # Volume Status
+            if ($AllSNMPData.volume_1_free_size_in_KB -ne "NoSuchObject" -or $AllSNMPData.volume_1_total_size_in_KB -ne "NoSuchInstance")
+            {
+                if ([int64]$AllSNMPData.volume_1_free_size_in_KB -lt 3145728) 
+                {
+                    Write-Host "Volumen 1 ist fast voll"
+                    $ErrorCount++
+                }
+            }            
+            if ($AllSNMPData.volume_1_status -ne "Ready") 
+            {
+                Write-Host "volume_1_status hat einen Fehler gemeldet"
+                $ErrorCount++
+            }
+
+            if ($VolumeCount -eq 2) 
+            {
+                if ($AllSNMPData.volume_2_total_size_in_KB -ne "NoSuchObject" -or $AllSNMPData.volume_2_total_size_in_KB -ne "NoSuchInstance")
+                {
+                    if ([int64]$AllSNMPData.volume_2_free_size_in_KB -lt 3145728) 
+                    {
+                        Write-Host "Volumen 2 ist fast voll"
+                        $ErrorCount++
+                    }
+                }
+                if ($AllSNMPData.volume_2_status -ne "Ready") 
+                {
+                    Write-Host "volume_2_status hat einen Fehler gemeldet"
+                    $ErrorCount++
+                }
+            }            
+        }    
+        catch {                
+            Write-Host $PSItem.Exception.Message
+        }
+
+        # Daten ausgeben
+        Write-Host "-----------------------------------------"
+        Write-Host "hdd_1_smart_info : " ($AllSNMPData.hdd_1_smart_info)
+        Write-Host "hdd_1_status :     " (Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_1_status)
+        Write-Host "-----------------------------------------"
+        if ($DiskCount -gt 2) 
+        {
+            Write-Host "hdd_2_smart_info : " ($AllSNMPData.hdd_2_smart_info)
+            Write-Host "hdd_2_status :     " (Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_2_status)
+            Write-Host "-----------------------------------------"
+           
+            if ($DiskCount -eq 4) 
+            {
                 Write-Host "hdd_3_smart_info : " ($AllSNMPData.hdd_3_smart_info)
-                Write-Host "hdd_3_status : " (Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_3_status)
+                Write-Host "hdd_3_status :     " (Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_3_status)
                 Write-Host "-----------------------------------------"
                 Write-Host "hdd_4_smart_info : " ($AllSNMPData.hdd_4_smart_info)
-                Write-Host "hdd_4_status : " (Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_4_status)
+                Write-Host "hdd_4_status :     " (Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_4_status)
                 Write-Host "-----------------------------------------"
-                Write-Host "system_cpu_usage : " ($AllSNMPData.system_cpu_usage)
-                Write-Host "system_temperature : " ($AllSNMPData.system_temperature)
-                Write-Host "-----------------------------------------"
-                Write-Host "volume_1_free_size_in_KB : " ($AllSNMPData.volume_1_free_size_in_KB)
-                Write-Host "volume_1_total_size_in_KB : " ($AllSNMPData.volume_1_total_size_in_KB)
-                if ($AllSNMPData.volume_1_free_size_in_KB -ne "NoSuchObject" -and $AllSNMPData.volume_1_total_size_in_KB -ne "NoSuchObject")
-                {
-                    Write-Host "volume_1_remaining_size_in_% : " ($AllSNMPData.volume_1_free_size_in_KB / $AllSNMPData.volume_1_total_size_in_KB * 100)
-                }
-                Write-Host "volume_1_status : " ($AllSNMPData.volume_1_status)
-                Write-Host "-----------------------------------------"
-                Write-Host "volume_2_free_size_in_KB : " ($AllSNMPData.volume_2_free_size_in_KB)
-                Write-Host "volume_2_total_size_in_KB : " ($AllSNMPData.volume_2_total_size_in_KB)
-                if ($AllSNMPData.volume_2_free_size_in_KB -ne "NoSuchObject" -and $AllSNMPData.volume_2_total_size_in_KB -ne "NoSuchObject") 
-                {
-                    Write-Host "volume_2_remaining_size_in_% : " ($AllSNMPData.volume_2_free_size_in_KB / $AllSNMPData.volume_2_total_size_in_KB * 100)
-                }
-                Write-Host "volume_2_status : " ($AllSNMPData.volume_2_status)
-                Write-Host "-----------------------------------------"
-            }
-            "2" 
-            {
-                # HDD Infos
-                $AllSNMPData.Add("hdd_1_smart_info", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.11.1.7.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("hdd_1_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.11.1.4.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-
-                $AllSNMPData.Add("hdd_2_smart_info", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.11.1.7.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("hdd_2_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.11.1.4.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-
-                # System Infos
-                $AllSNMPData.Add("system_cpu_usage", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.1.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("system_temperature", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.6.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-
-                # Volume Infos
-                $AllSNMPData.Add("volume_1_free_size_in_KB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.4.1.1.1.2.3.2.1.4.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("volume_1_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.17.1.6.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("volume_1_total_size_in_KB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.4.1.1.1.2.3.2.1.3.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-
-                $AllSNMPData.Add("volume_2_free_size_in_KB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.4.1.1.1.2.3.2.1.4.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("volume_2_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.17.1.6.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("volume_2_total_size_in_KB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.4.1.1.1.2.3.2.1.3.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)                  
-                
-                try 
-                {
-                    if ($AllSNMPData.hdd_1_smart_info -ne "GOOD") 
-                    {
-                        Write-Host "hdd_1_smart_info hat einen Fehler gemeldet"
-                        $ErrorCount++
-                    }
-                    if ($AllSNMPData.hdd_2_smart_info -ne "GOOD") 
-                    {
-                        Write-Host "hdd_2_smart_info hat einen Fehler gemeldet"
-                        $ErrorCount++
-                    }                    
-
-                    if ($AllSNMPData.hdd_1_status -ne "0") 
-                    {
-                        Write-Host "hdd_1_status hat einen Fehler gemeldet"
-                        $ErrorCount++
-                    }
-                    if ($AllSNMPData.hdd_2_status -ne "0") 
-                    {
-                        Write-Host "hdd_2_status hat einen Fehler gemeldet"
-                        $ErrorCount++
-                    }                    
-
-                    if ($null -ne $AllSNMPData.system_cpu_usage)
-                    {
-                        if ([int32]$AllSNMPData.system_cpu_usage -gt 70) 
-                        {
-                            Write-Host "system_cpu_usage hat einen Fehler gemeldet"
-                            $ErrorCount++
-                        }
-                    }
-                    if ($null -ne $AllSNMPData.system_temperature) 
-                    {
-                        if ([int32]$AllSNMPData.system_temperature -gt 50) 
-                        {
-                            Write-Host "system_temperature hat einen Fehler gemeldet"
-                            $ErrorCount++
-                        }
-                    }
-
-                    if (!($AllSNMPData.volume_1_free_size_in_KB -eq "NoSuchObject")) 
-                    {
-                        if ([int64]$AllSNMPData.volume_1_free_size_in_KB -lt 3145728) 
-                        {
-                            Write-Host "Volumen 1 ist fast voll"
-                            $ErrorCount++
-                        }
-                    }
-                    if (!($AllSNMPData.volume_2_total_size_in_KB -eq "NoSuchObject")) 
-                    {
-                        if ([int64]$AllSNMPData.volume_2_free_size_in_KB -lt 3145728) 
-                        {
-                            Write-Host "Volumen 2 ist fast voll"
-                            $ErrorCount++
-                        }
-                    }
-
-                    if ($AllSNMPData.volume_1_status -ne "Ready") 
-                    {
-                        Write-Host "volume_1_status hat einen Fehler gemeldet"
-                        $ErrorCount++
-                    }
-                    if ($AllSNMPData.volume_2_status -ne "Ready") 
-                    {
-                        Write-Host "volume_2_status hat einen Fehler gemeldet"
-                        $ErrorCount++
-                    }
-                }    
-                catch {                
-                    Write-Host $PSItem.Exception.Message
-                }
-
-                # Daten ausgeben
-                Write-Host "-----------------------------------------"
-                Write-Host "hdd_1_smart_info : " ($AllSNMPData.hdd_1_smart_info)
-                Write-Host "hdd_1_status : " (Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_1_status)
-                Write-Host "-----------------------------------------"
-                Write-Host "hdd_2_smart_info : " ($AllSNMPData.hdd_2_smart_info)
-                Write-Host "hdd_2_status : " (Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_2_status)
-                Write-Host "-----------------------------------------"
-                Write-Host "system_cpu_usage : " ($AllSNMPData.system_cpu_usage)
-                Write-Host "system_temperature : " ($AllSNMPData.system_temperature)
-                Write-Host "-----------------------------------------"
-                Write-Host "volume_1_free_size_in_KB : " ($AllSNMPData.volume_1_free_size_in_KB)
-                Write-Host "volume_1_total_size_in_KB : " ($AllSNMPData.volume_1_total_size_in_KB)
-                if ($AllSNMPData.volume_1_free_size_in_KB -ne "NoSuchObject" -and $AllSNMPData.volume_1_total_size_in_KB -ne "NoSuchObject")
-                {
-                    Write-Host "volume_1_remaining_size_in_% : " ($AllSNMPData.volume_1_free_size_in_KB / $AllSNMPData.volume_1_total_size_in_KB * 100)
-                }
-                Write-Host "volume_1_status : " ($AllSNMPData.volume_1_status)
-                Write-Host "-----------------------------------------"
-                Write-Host "volume_2_free_size_in_KB : " ($AllSNMPData.volume_2_free_size_in_KB)
-                Write-Host "volume_2_total_size_in_KB : " ($AllSNMPData.volume_2_total_size_in_KB)
-                if ($AllSNMPData.volume_2_free_size_in_KB -ne "NoSuchObject" -and $AllSNMPData.volume_2_total_size_in_KB -ne "NoSuchObject") 
-                {
-                    Write-Host "volume_2_remaining_size_in_% : " ($AllSNMPData.volume_2_free_size_in_KB / $AllSNMPData.volume_2_total_size_in_KB * 100)
-                }
-                Write-Host "volume_2_status : " ($AllSNMPData.volume_2_status)
-                Write-Host "-----------------------------------------"
-            }
-            "1" 
-            {
-                # HDD Infos
-                $AllSNMPData.Add("hdd_1_smart_info", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.11.1.7.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("hdd_1_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.11.1.4.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-
-                # System Infos
-                $AllSNMPData.Add("system_cpu_usage", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.1.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("system_temperature", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.6.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-
-                # Volume Infos
-                $AllSNMPData.Add("volume_1_free_size_in_KB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.4.1.1.1.2.3.2.1.4.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("volume_1_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.17.1.6.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("volume_1_total_size_in_KB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.4.1.1.1.2.3.2.1.3.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-
-                $AllSNMPData.Add("volume_2_free_size_in_KB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.4.1.1.1.2.3.2.1.4.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("volume_2_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.17.1.6.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("volume_2_total_size_in_KB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.4.1.1.1.2.3.2.1.3.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)                  
-                
-                try 
-                {
-                    if ($AllSNMPData.hdd_1_smart_info -ne "GOOD") 
-                    {
-                        Write-Host "hdd_1_smart_info hat einen Fehler gemeldet"
-                        $ErrorCount++
-                    }
-
-                    if ($AllSNMPData.hdd_1_status -ne "0") 
-                    {
-                        Write-Host "hdd_1_status hat einen Fehler gemeldet"
-                        $ErrorCount++
-                    }
-
-                    if ($null -ne $AllSNMPData.system_cpu_usage)
-                    {
-                        if ([int32]$AllSNMPData.system_cpu_usage -gt 70) 
-                        {
-                            Write-Host "system_cpu_usage hat einen Fehler gemeldet"
-                            $ErrorCount++
-                        }
-                    }
-                    if ($null -ne $AllSNMPData.system_temperature) 
-                    {
-                        if ([int32]$AllSNMPData.system_temperature -gt 50) 
-                        {
-                            Write-Host "system_temperature hat einen Fehler gemeldet"
-                            $ErrorCount++
-                        }
-                    }
-
-                    if (!($AllSNMPData.volume_1_free_size_in_KB -eq "NoSuchObject")) 
-                    {
-                        if ([int64]$AllSNMPData.volume_1_free_size_in_KB -lt 3145728) 
-                        {
-                            Write-Host "Volumen 1 ist fast voll"
-                            $ErrorCount++
-                        }
-                    }
-                    if (!($AllSNMPData.volume_2_total_size_in_KB -eq "NoSuchObject")) 
-                    {
-                        if ([int64]$AllSNMPData.volume_2_free_size_in_KB -lt 3145728) 
-                        {
-                            Write-Host "Volumen 2 ist fast voll"
-                            $ErrorCount++
-                        }
-                    }
-
-                    if ($AllSNMPData.volume_1_status -ne "Ready") 
-                    {
-                        Write-Host "volume_1_status hat einen Fehler gemeldet"
-                        $ErrorCount++
-                    }
-                    if ($AllSNMPData.volume_2_status -ne "Ready") 
-                    {
-                        Write-Host "volume_2_status hat einen Fehler gemeldet"
-                        $ErrorCount++
-                    }
-                }    
-                catch {                
-                    Write-Host $PSItem.Exception.Message
-                }
-
-                # Daten ausgeben
-                Write-Host "-----------------------------------------"
-                Write-Host "hdd_1_smart_info : " ($AllSNMPData.hdd_1_smart_info)
-                Write-Host "hdd_1_status : " (Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_1_status)
-                Write-Host "-----------------------------------------"
-                Write-Host "system_cpu_usage : " ($AllSNMPData.system_cpu_usage)
-                Write-Host "system_temperature : " ($AllSNMPData.system_temperature)
-                Write-Host "-----------------------------------------"
-                Write-Host "volume_1_free_size_in_KB : " ($AllSNMPData.volume_1_free_size_in_KB)
-                Write-Host "volume_1_total_size_in_KB : " ($AllSNMPData.volume_1_total_size_in_KB)
-                if ($AllSNMPData.volume_1_free_size_in_KB -ne "NoSuchObject" -and $AllSNMPData.volume_1_total_size_in_KB -ne "NoSuchObject")
-                {
-                    Write-Host "volume_1_remaining_size_in_% : " ($AllSNMPData.volume_1_free_size_in_KB / $AllSNMPData.volume_1_total_size_in_KB * 100)
-                }
-                Write-Host "volume_1_status : " ($AllSNMPData.volume_1_status)
-                Write-Host "-----------------------------------------"
-                Write-Host "volume_2_free_size_in_KB : " ($AllSNMPData.volume_2_free_size_in_KB)
-                Write-Host "volume_2_total_size_in_KB : " ($AllSNMPData.volume_2_total_size_in_KB)
-                if ($AllSNMPData.volume_2_free_size_in_KB -ne "NoSuchObject" -and $AllSNMPData.volume_2_total_size_in_KB -ne "NoSuchObject") 
-                {
-                    Write-Host "volume_2_remaining_size_in_% : " ($AllSNMPData.volume_2_free_size_in_KB / $AllSNMPData.volume_2_total_size_in_KB * 100)
-                }
-                Write-Host "volume_2_status : " ($AllSNMPData.volume_2_status)
-                Write-Host "-----------------------------------------"
-            }
-            Default 
-            {
-                Write-Host "Es wurde eine nicht unterstuetzte Anzahl an Disks angegeben!"
-                Exit 1001
-            }
-        }    
-    }
-    "Netgear" {
-        
-        switch ($DiskCount) 
-        {
-            "4" 
-            {
-                # HDD Infos
-                $AllSNMPData.Add("disk_1_state", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.4526.22.3.1.9.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("disk_2_state", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.4526.22.3.1.9.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("disk_3_state", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.4526.22.3.1.9.3" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("disk_4_state", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.4526.22.3.1.9.4" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-
-                $AllSNMPData.Add("disk_1_temp", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.4526.22.3.1.10.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("disk_2_temp", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.4526.22.3.1.10.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("disk_3_temp", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.4526.22.3.1.10.3" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("disk_4_temp", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.4526.22.3.1.10.4" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-
-                # System Infos
-                $AllSNMPData.Add("system_cpu_usage", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.1.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("system_temperature", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.6.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-
-                # Volume Infos
-                $AllSNMPData.Add("volume_1_free_size_in_KB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.4.1.1.1.2.3.2.1.4.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("volume_1_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.17.1.6.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("volume_1_total_size_in_KB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.4.1.1.1.2.3.2.1.3.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-
-                $AllSNMPData.Add("volume_2_free_size_in_KB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.4.1.1.1.2.3.2.1.4.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("volume_2_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.17.1.6.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-                $AllSNMPData.Add("volume_2_total_size_in_KB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.4.1.1.1.2.3.2.1.3.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-
-                try 
-                {
-                    if ($AllSNMPData.hdd_1_smart_info -ne "GOOD" -or $AllSNMPData.hdd_2_smart_info -ne "GOOD" -or $AllSNMPData.hdd_3_smart_info -ne "GOOD" -or$AllSNMPData.hdd_4_smart_info -ne "GOOD") 
-                    {
-                        Write-Host "HDD-Smart-Info hat einen Fehler gemeldet"
-                        $ErrorCount++
-                    }
-                    if ($AllSNMPData.hdd_1_status -ne "0" -or $AllSNMPData.hdd_2_status -ne "0" -or $AllSNMPData.hdd_3_status -ne "0" -or $AllSNMPData.hdd_4_status -ne "0") 
-                    {
-                        Write-Host "HDD-Status hat einen Fehler gemeldet"
-                        $ErrorCount++
-                    }
-                    if ([int32]$AllSNMPData.system_cpu_usage -gt 70 -or [int32]$AllSNMPData.system_temperature -gt 50) 
-                    {
-                        Write-Host "Das System hat einen Fehler gemeldet"
-                        $ErrorCount++
-                    }
-                    if ([int64]$AllSNMPData.volume_1_free_size_in_KB -lt 3145728 -or [int64]$AllSNMPData.volume_2_free_size_in_KB -lt 3145728) 
-                    {
-                        Write-Host "Eins der Volumen ist fast voll"
-                        $ErrorCount++
-                    }
-                    if ($AllSNMPData.volume_1_status -ne "Ready" -or $AllSNMPData.volume_2_status -ne "Ready") 
-                    {
-                        Write-Host "Ein Volumen hat einen Fehler gemeldet"
-                        $ErrorCount++
-                    }
-                }    
-                catch {
-
-                    Write-Host $PSItem.Exception.Message
-                }
-
-                # Daten ausgeben
-                Write-Host "-----------------------------------------"
-                Write-Host "hdd_1_smart_info : $($AllSNMPData.hdd_1_smart_info)"
-                Write-Host "hdd_1_status : " Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_1_status
-                Write-Host "-----------------------------------------"
-                Write-Host "hdd_2_smart_info : $($AllSNMPData.hdd_2_smart_info)"
-                Write-Host "hdd_1_status : " Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_2_status
-                Write-Host "-----------------------------------------"
-                Write-Host "hdd_3_smart_info : $($AllSNMPData.hdd_3_smart_info)"
-                Write-Host "hdd_1_status : " Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_3_status
-                Write-Host "-----------------------------------------"
-                Write-Host "hdd_4_smart_info : $($AllSNMPData.hdd_4_smart_info)"
-                Write-Host "hdd_1_status : " Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_4_status
-                Write-Host "-----------------------------------------"
-                Write-Host "system_cpu_usage : $($AllSNMPData.system_cpu_usage)"
-                Write-Host "system_temperature : $($AllSNMPData.system_temperature)"
-                Write-Host "-----------------------------------------"
-                Write-Host "volume_1_free_size_in_KB : $($AllSNMPData.volume_1_free_size_in_KB)"                
-                Write-Host "volume_1_total_size_in_KB : $($AllSNMPData.volume_1_total_size_in_KB)"
-                Write-Host "volume_1_remaining_size_in_% : $($AllSNMPData.volume_1_free_size_in_KB / $AllSNMPData.volume_1_total_size_in_KB * 100)"
-                Write-Host "volume_1_status : $($AllSNMPData.volume_1_status)"
-                Write-Host "-----------------------------------------"
-                Write-Host "volume_2_free_size_in_KB : $($AllSNMPData.volume_2_free_size_in_KB)"               
-                Write-Host "volume_2_total_size_in_KB : $($AllSNMPData.volume_2_total_size_in_KB)"
-                Write-Host "volume_2_remaining_size_in_% : $($AllSNMPData.volume_2_free_size_in_KB / $AllSNMPData.volume_2_total_size_in_KB * 100)"
-                Write-Host "volume_2_status : $($AllSNMPData.volume_2_status)"
-                Write-Host "-----------------------------------------"
-            }
-            "2" 
-            {
-                "Wird derzeit noch nicht unterstuetzt"
-            }
-            "1" 
-            {
-                "Wird derzeit noch nicht unterstuetzt"
-            }
-            Default {
-                Write-Host "Es wurde eine nicht unterstuetzte Anzahl an Disks angegeben!"
-                Exit 1001
-            }
+            }    
         }        
-    }
-    "Synology" {
-        Write-Host "Synology wird derzeit noch nicht unterstuetzt"
-        <#
-        switch ($DiskCount) 
+        Write-Host "system_cpu_usage :   " ($AllSNMPData.system_cpu_usage)
+        Write-Host "system_temperature : " ($AllSNMPData.system_temperature)
+        Write-Host "system_model :       " ($AllSNMPData.system_model)
+        Write-Host "-----------------------------------------"
+        Write-Host "volume_1_free_size_in_KB :  " ($AllSNMPData.volume_1_free_size_in_KB)
+        Write-Host "volume_1_total_size_in_KB : " ($AllSNMPData.volume_1_total_size_in_KB)
+        if ($AllSNMPData.volume_1_free_size_in_KB -ne "NoSuchObject" -and $AllSNMPData.volume_1_total_size_in_KB -ne "NoSuchObject")
         {
-            "4" {
-                "Wird derzeit noch nicht unterstuetzt"
-            }
-            "2" {
-                "Wird derzeit noch nicht unterstuetzt"
-            }
-            "1" {
-                "Wird derzeit noch nicht unterstuetzt"
-            }
-            Default {
-                Write-Host "Es wurde eine nicht unterstuetzte Anzahl an Disks angegeben!"
-                Exit 1001
+            if ($AllSNMPData.volume_1_free_size_in_KB -ne "NoSuchInstance" -and $AllSNMPData.volume_1_total_size_in_KB -ne "NoSuchInstance")
+            {
+                Write-Host "volume_1_remaining_size_in_% : " ($AllSNMPData.volume_1_free_size_in_KB / $AllSNMPData.volume_1_total_size_in_KB * 100)
             }
         }
-        #>
+        Write-Host "volume_1_status : " ($AllSNMPData.volume_1_status)
+        Write-Host "-----------------------------------------"
+        if ($VolumeCount -eq 2)
+        {
+            Write-Host "volume_2_free_size_in_KB :  " ($AllSNMPData.volume_2_free_size_in_KB)
+            Write-Host "volume_2_total_size_in_KB : " ($AllSNMPData.volume_2_total_size_in_KB)
+            if ($AllSNMPData.volume_2_free_size_in_KB -ne "NoSuchObject" -and $AllSNMPData.volume_2_total_size_in_KB -ne "NoSuchObject") 
+            {
+                if ($AllSNMPData.volume_2_free_size_in_KB -ne "NoSuchInstance" -and $AllSNMPData.volume_2_total_size_in_KB -ne "NoSuchInstance") 
+                {
+                    Write-Host "volume_2_remaining_size_in_% : " ($AllSNMPData.volume_2_free_size_in_KB / $AllSNMPData.volume_2_total_size_in_KB * 100)
+                }                
+            }
+            Write-Host "volume_2_status : " ($AllSNMPData.volume_2_status)
+            Write-Host "-----------------------------------------"
+        }        
+    }
+    "Netgear" 
+    {
+        Write-Host "Netgear wird derzeit noch nicht unterstuetzt"
+        Exit 1001
+    }
+    "Synology" 
+    {
+        Write-Host "Synology wird derzeit noch nicht unterstuetzt"
+        Exit 1001
     }
     Default 
     {
-        Write-Host "Der Hersteller wird nicht unterstuetzt"
+        Write-Host "Der Hersteller wird nicht unterstuetzt, ueberprüfen sie die Angabe des Herstellers"
+        Exit 1001
     }
 }
