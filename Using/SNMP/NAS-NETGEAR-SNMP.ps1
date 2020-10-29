@@ -96,7 +96,7 @@ foreach ($IPAdress in $IPAdressList)
     $AllSNMPData.Add("disk_state_1", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.4526.22.3.1.9.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
     $AllSNMPData.Add("disk_temp_1", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.4526.22.3.1.10.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
 
-    if ($DiskCount -eq 2) 
+    if ($DiskCount -ge 2) 
     {
         $AllSNMPData.Add("disk_state_2", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.4526.22.3.1.9.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
         $AllSNMPData.Add("disk_temp_2", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.4526.22.3.1.10.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
@@ -143,7 +143,7 @@ foreach ($IPAdress in $IPAdressList)
             Write-Host "disk_state_1 hat einen Fehler gemeldet"
             $ErrorCount++
         }
-        if ($DiskCount -eq 2)
+        if ($DiskCount -ge 2)
         {
             if ($AllSNMPData.disk_state_2 -ne "ONLINE") 
             {
@@ -172,7 +172,7 @@ foreach ($IPAdress in $IPAdressList)
             Write-Host "disk_temp_1 hat einen Fehler gemeldet"
             $ErrorCount++
         }
-        if ($DiskCount -eq 2) 
+        if ($DiskCount -ge 2) 
         {
             [int]$disk_temp_2 = $AllSNMPData.disk_temp_2
             if ($disk_temp_2 -gt 50) 
@@ -198,7 +198,7 @@ foreach ($IPAdress in $IPAdressList)
         }            
 
         # Volume Status
-        if ($AllSNMPData.volume_1_free_size_in_MB -ne "NoSuchObject" -or $AllSNMPData.volume_1_total_size_in_MB -ne "NoSuchInstance")
+        if ($AllSNMPData.volume_1_free_size_in_MB -notlike "*object*" -or $AllSNMPData.volume_1_total_size_in_MB -notlike "*Instance*")
         {
             if ([int64]$AllSNMPData.volume_1_free_size_in_MB -lt 3092) 
             {
@@ -214,7 +214,7 @@ foreach ($IPAdress in $IPAdressList)
 
         if ($VolumeCount -eq 2) 
         {
-            if ($AllSNMPData.volume_2_total_size_in_MB -ne "NoSuchObject" -or $AllSNMPData.volume_2_total_size_in_MB -ne "NoSuchInstance")
+            if ($AllSNMPData.volume_2_total_size_in_MB -notlike "*object*" -or $AllSNMPData.volume_2_total_size_in_MB -notlike "*Instance*")
             {
                 if ([int64]$AllSNMPData.volume_2_free_size_in_MB -lt 3092) 
                 {
@@ -242,45 +242,47 @@ foreach ($IPAdress in $IPAdressList)
     # Daten ausgeben
     Write-Host "-----------------------------------------"
     Write-Host "disk_state_1 : " ($AllSNMPData.disk_state_1)
-    Write-Host "disk_temp_1 :  " $disk_temp_1
+    Write-Host "disk_temp_1  : " $disk_temp_1
     Write-Host "-----------------------------------------"
-    if ($DiskCount -eq 2) 
+    if ($DiskCount -ge 2) 
     {
         Write-Host "disk_state_2 : " ($AllSNMPData.disk_state_2)
-        Write-Host "disk_temp_2 :  " $disk_temp_2
+        Write-Host "disk_temp_2  : " $disk_temp_2
         Write-Host "-----------------------------------------"
         
         if ($DiskCount -eq 4) 
         {
             Write-Host "disk_state_3 : " ($AllSNMPData.disk_state_3)
-            Write-Host "disk_temp_3 :   " $disk_temp_3
+            Write-Host "disk_temp_3  : " $disk_temp_3
             Write-Host "-----------------------------------------"
             Write-Host "disk_state_4 : " ($AllSNMPData.disk_state_4)
-            Write-Host "disk_temp_4 :   " $disk_temp_4
+            Write-Host "disk_temp_4  : " $disk_temp_4
             Write-Host "-----------------------------------------"
         }    
     }
-    Write-Host "nas_os_version: " ($AllSNMPData.nas_os_version)
-    Write-Host "volume_1_free_size_in_MB :  " ($AllSNMPData.volume_1_free_size_in_MB)
+    Write-Host "nas_os_version            : " ($AllSNMPData.nas_os_version)
+    Write-Host "volume_1_free_size_in_MB  : " ($AllSNMPData.volume_1_free_size_in_MB)
     Write-Host "volume_1_total_size_in_MB : " ($AllSNMPData.volume_1_total_size_in_MB)
-    if ($AllSNMPData.volume_1_free_size_in_MB -ne "NoSuchObject" -and $AllSNMPData.volume_1_total_size_in_MB -ne "NoSuchObject")
+    if ($AllSNMPData.volume_1_free_size_in_MB -notlike "*object*" -and $AllSNMPData.volume_1_free_size_in_MB -notlike "*object*")
     {
-        if ($AllSNMPData.volume_1_free_size_in_MB -ne "NoSuchInstance" -and $AllSNMPData.volume_1_total_size_in_MB -ne "NoSuchInstance")
+        if ($AllSNMPData.volume_1_total_size_in_MB -notlike "*Instance*" -and $AllSNMPData.volume_1_total_size_in_MB -notlike "*Instance*")
         {
-            Write-Host "volume_1_remaining_size_in_% : " ($AllSNMPData.volume_1_free_size_in_MB / $AllSNMPData.volume_1_total_size_in_MB * 100)
+            Write-Host "volume_1_free_size_in_MB     : " ("{0:N2}" -f ($AllSNMPData.volume_1_free_size_in_MB))
+            Write-Host "volume_1_total_size_in_MB    : " ("{0:N2}" -f ($AllSNMPData.volume_1_total_size_in_MB))
+            Write-Host "volume_1_remaining_size_in_% : " ("{0:N2}" -f ($AllSNMPData.volume_1_free_size_in_MB / $AllSNMPData.volume_1_total_size_in_MB * 100))
         }
     }
     Write-Host "volume_1_status : " ($AllSNMPData.volume_1_status)
     Write-Host "-----------------------------------------"
     if ($VolumeCount -eq 2)
     {
-        if ($AllSNMPData.volume_2_free_size_in_MB -ne "NoSuchObject" -and $AllSNMPData.volume_2_total_size_in_MB -ne "NoSuchObject") 
+        if ($AllSNMPData.volume_2_free_size_in_MB -notlike "*object*" -and $AllSNMPData.volume_2_free_size_in_MB -notlike "*object*") 
         {
-            if ($AllSNMPData.volume_2_free_size_in_MB -ne "NoSuchInstance" -and $AllSNMPData.volume_2_total_size_in_MB -ne "NoSuchInstance") 
+            if ($AllSNMPData.volume_2_total_size_in_MB -notlike "*Instance*" -and $AllSNMPData.volume_2_total_size_in_MB -notlike "*Instance*") 
             {
-                Write-Host "volume_2_remaining_size_in_% : " ($AllSNMPData.volume_2_free_size_in_MB / $AllSNMPData.volume_2_total_size_in_MB * 100)
-                Write-Host "volume_2_free_size_in_MB :  " ($AllSNMPData.volume_2_free_size_in_MB)
-                Write-Host "volume_2_total_size_in_MB : " ($AllSNMPData.volume_2_total_size_in_MB)
+                Write-Host "volume_2_free_size_in_MB     : " ("{0:N2}" -f ($AllSNMPData.volume_2_free_size_in_MB))
+                Write-Host "volume_2_total_size_in_MB    : " ("{0:N2}" -f ($AllSNMPData.volume_2_total_size_in_MB))
+                Write-Host "volume_2_remaining_size_in_% : " ("{0:N2}" -f ($AllSNMPData.volume_2_free_size_in_MB / $AllSNMPData.volume_2_total_size_in_MB * 100))
             }
             else 
             {

@@ -2,31 +2,31 @@ try {
     $ComputerSystemInfo = Get-WmiObject -Class Win32_ComputerSystem -ErrorAction Stop
         
     switch ($ComputerSystemInfo.Model) { 
-            
-        # Check for Hyper-V Machine Type 
+        "Microsoft Corporation Virtual Machine"
+        {
+            $MachineType = "HyperV VM"
+        }
         "Virtual Machine" 
         { 
-            $MachineType="Hyper-V VM" 
+            $MachineType="VM" 
         } 
-
-        # Check for VMware Machine Type 
-        "VMware Virtual Platform" 
+        "VMware Virtual Platform"
         { 
             $MachineType="VMware VM" 
         } 
-
-        # Check for Oracle VM Machine Type 
+        "VMware, Inc. VMware Virtual Platform"
+        {
+            $MachineType="VMware VM"
+        }
         "VirtualBox" 
         { 
             $MachineType="VM" 
         } 
-
-        # Otherwise it is a physical Box 
         default 
         { 
             $MachineType="Physical" 
         } 
-    } 
+    }
         
     # Building MachineTypeInfo Object 
     $MachineTypeInfo = New-Object -TypeName PSObject -Property ([ordered]@{ 

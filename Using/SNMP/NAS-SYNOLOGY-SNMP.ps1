@@ -3,12 +3,7 @@
     $CommunityString
 #>
 
-<# Todo
-    - Softwareversion QNAP, Netgear, Synology
-    - Sofwareversionscheck auf aktualität
-    - eventuell Modelle einpflegen
-#>
-
+#region hilfsfunktionen
 function Convert_disk_status_to_text
 {
     param (
@@ -39,6 +34,29 @@ function Convert_disk_status_to_text
         }
     }
 }
+function Convert_nas_satus_to_text 
+{
+    param (
+        # Wert dem SNMP zurueck gibt
+        [Parameter(Mandatory = $true)]
+        [string]$SNMPValue
+    )
+    
+    switch ($SNMPValue) 
+    {
+        "1" {
+            return "Normal"
+        }
+        "2" {
+            return "Failed"
+        }
+        Default {
+            "unknown"
+        }
+    }
+    
+}
+#endregion
 
 if ($PSVersionTable.PSVersion.Major -lt 5) 
 {
@@ -83,44 +101,30 @@ foreach ($IPAdress in $IPAdressList)
     $AllSNMPData = @{}
 
     #region get disk and volume count
-    [bool]$DiskCountCheck = $false
     [int]$DiskCount = 0
     [int]$Diski = 0
 
-    while ($DiskCountCheck -eq $false)
+    for ($Diski = 0; $Diski -lt 8; $Diski++)
     {
-        for ($Diski = 0; $Diski -lt 8; $Diski++)
-        { 
-            $Value = (Get-SnmpData -IP $IPAdress -OID (".1.3.6.1.4.1.6574.2.1.1.5." + $Diski) -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data
-            if ($value -like "*instance*" -or $Value -like "*object*")
-            {
-                $DiskCountCheck = $true
-            }
-            else
-            {
-                $DiskCount++
-            }
+        $Value = $null
+        $Value = (Get-SnmpData -IP $IPAdress -OID (".1.3.6.1.4.1.6574.2.1.1.5." + [string]$Diski) -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data
+        if ($value -notlike "*Instance*" -or $Value -notlike "*object*" -or $Value -ne "0")
+        {
+            $DiskCount++
         }
     }
 
-    [bool]$VolumeCountCheck = $false
     [int]$VolumeCount = 0
     [int]$Voli = 0
 
-    while ($VolumeCountCheck -eq $false)
-    {
-        for ($Voli = 0; $Voli -lt 2; $Voli++)
-        { 
-            $Value = (Get-SnmpData -IP $IPAdress -OID (".1.3.6.1.4.1.6574.3.1.1.3." + $Voli) -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data
-            if ($value -like "*instance*" -or $Value -like "*object*")
-            {
-                $VolumeCountCheck = $true
-            }
-            else
-            {
-                $VolumeCount++
-            }
-        }
+    for ($Voli = 0; $Voli -lt 2; $Voli++)
+    { 
+        $Value = $null
+        $Value = (Get-SnmpData -IP $IPAdress -OID (".1.3.6.1.4.1.6574.3.1.1.3." + [string]$Voli) -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data
+        if ($value -notlike "*Instance*" -or $Value -notlike "*object*" -or $Value -ne "0")
+        {
+            $VolumeCount++                
+        }        
     }
     #endregion
 
@@ -136,12 +140,12 @@ foreach ($IPAdress in $IPAdressList)
     $AllSNMPData.Add("disk_state_1", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.6574.2.1.1.5.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
     $AllSNMPData.Add("disk_temp_1", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.6574.2.1.1.6.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
 
-    if ($DiskCount -eq 2) 
+    if ($DiskCount -ge 2) 
     {
         $AllSNMPData.Add("disk_state_2", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.6574.2.1.1.5.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
         $AllSNMPData.Add("disk_temp_2", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.6574.2.1.1.6.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
         
-        if ($DiskCount -eq 4) 
+        if ($DiskCount -ge 4) 
         {
             $AllSNMPData.Add("disk_state_3", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.6574.2.1.1.5.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
             $AllSNMPData.Add("disk_temp_3", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.6574.2.1.1.6.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
@@ -161,7 +165,7 @@ foreach ($IPAdress in $IPAdressList)
     $AllSNMPData.Add("raid_1_TotalSize_in_B", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.6574.3.1.1.5.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
     $AllSNMPData.Add("raid_1_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.6574.3.1.1.3.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
 
-    if ($VolumeCount -eq 2) 
+    if ($VolumeCount -ge 2) 
     {
         $AllSNMPData.Add("raid_2_FreeSize_in_B", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.6574.3.1.1.4.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
         $AllSNMPData.Add("raid_2_TotalSize_in_B", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.6574.3.1.1.5.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
@@ -182,7 +186,7 @@ foreach ($IPAdress in $IPAdressList)
         {
             if ($AllSNMPData.nas_upgradeavailable -eq "1") 
             {
-                Write-Host "Es ist ein neues DSM Update verfügbar"
+                Write-Host "Es ist ein neues DSM Update verfuegbar"
             }            
         }
         if ($AllSNMPData.nas_systemstatus -ne "1" -or $AllSNMPData.nas_systemtemperature -gt "50") 
@@ -197,14 +201,14 @@ foreach ($IPAdress in $IPAdressList)
             Write-Host "disk_state_1 hat einen Fehler gemeldet"
             $ErrorCount++
         }
-        if ($DiskCount -eq 2)
+        if ($DiskCount -ge 2)
         {
             if ($AllSNMPData.disk_state_2 -ne "1") 
             {
                 Write-Host "disk_state_2 hat einen Fehler gemeldet"
                 $ErrorCount++
             }
-            if ($DiskCount -eq 4) 
+            if ($DiskCount -ge 4) 
             {
                 if ($AllSNMPData.disk_state_3 -ne "1") 
                 {
@@ -221,29 +225,30 @@ foreach ($IPAdress in $IPAdressList)
 
         # HDD temp
         [int]$disk_temp_1 = $AllSNMPData.disk_temp_1
-        if ($disk_temp_1 -gt 50) 
+        [int]$DiskTempMax = 45
+        if ($disk_temp_1 -gt $DiskTempMax) 
         {
             Write-Host "disk_temp_1 hat einen Fehler gemeldet"
             $ErrorCount++
         }
-        if ($DiskCount -eq 2) 
+        if ($DiskCount -ge 2) 
         {
             [int]$disk_temp_2 = $AllSNMPData.disk_temp_2
-            if ($disk_temp_2 -gt 50) 
+            if ($disk_temp_2 -gt $DiskTempMax) 
             {
                 Write-Host "disk_temp_2 hat einen Fehler gemeldet"
                 $ErrorCount++
             }            
-            if ($DiskCount -eq 4) 
+            if ($DiskCount -ge 4) 
             {
                 [int]$disk_temp_3 = $AllSNMPData.disk_temp_3                    
-                if ($disk_temp_3 -gt 50) 
+                if ($disk_temp_3 -gt $DiskTempMax) 
                 {
                     Write-Host "disk_temp_3 hat einen Fehler gemeldet"
                     $ErrorCount++
                 }
                 [int]$disk_temp_4 = $AllSNMPData.disk_temp_4
-                if ($disk_temp_4 -gt 50) 
+                if ($disk_temp_4 -gt $DiskTempMax) 
                 {
                     Write-Host "disk_temp_4 hat einen Fehler gemeldet"
                     $ErrorCount++
@@ -253,23 +258,23 @@ foreach ($IPAdress in $IPAdressList)
 
         # Volume Status
 
-        if ($AllSNMPData.raid_1_FreeSize_in_B -ne "*object*" -or $AllSNMPData.raid_1_TotalSize_in_B -ne "*instance*")
+        if ($AllSNMPData.raid_1_FreeSize_in_B -notlike "*object*" -and $AllSNMPData.raid_1_FreeSize_in_B -notlike "*instance*")
         {
             if ([int64]$AllSNMPData.raid_1_FreeSize_in_B -lt 322122547200) 
             {
                 Write-Host "Volumen 1 ist fast voll"
                 $ErrorCount++
             }
-        }              
+        }
         if ($AllSNMPData.raid_1_status -ne "1") 
         {
             Write-Host "raid_1_status hat einen Fehler gemeldet"
             $ErrorCount++
         }
 
-        if ($VolumeCount -eq 2) 
+        if ($VolumeCount -ge 2) 
         {
-            if ($AllSNMPData.raid_2_TotalSize_in_B -ne "*object*" -or $AllSNMPData.raid_2_TotalSize_in_B -ne "*instance*")
+            if ($AllSNMPData.raid_2_FreeSize_in_B -notlike "*object*" -and $AllSNMPData.raid_2_FreeSize_in_B -notlike "*instance*")
             {
                 if ([int64]$AllSNMPData.raid_2_FreeSize_in_B -lt 322122547200) 
                 {
@@ -282,7 +287,7 @@ foreach ($IPAdress in $IPAdressList)
                 Write-Host "raid_2_status hat einen Fehler gemeldet"
                 $ErrorCount++
             }
-        }            
+        }
     }    
     catch {                
         Write-Host $PSItem.Exception.Message
@@ -297,52 +302,53 @@ foreach ($IPAdress in $IPAdressList)
 
     #region Daten ausgeben
     Write-Host "-----------------------------------------"
-    Write-Host "nas_modelName:  " ($AllSNMPData.nas_modelName)
-    Write-Host "nas_os_version: " ($AllSNMPData.nas_os_version)
-    Write-Host "nas_upgradeavailable: " ($AllSNMPData.nas_upgradeavailable)
-    Write-Host "nas_systemstatus: " ($AllSNMPData.nas_systemstatus)
-    Write-Host "nas_systemtemperature: " ($AllSNMPData.nas_systemtemperature)
-
+    Write-Host "nas_modelName    : " ($AllSNMPData.nas_modelName)
+    Write-Host "nas_os_version   : " ($AllSNMPData.nas_os_version)
+    Write-Host "nas_systemstatus : " (Convert_nas_satus_to_text -SNMPValue $AllSNMPData.nas_systemstatus)
+    Write-Host "nas_systemtemp   : " ($AllSNMPData.nas_systemtemperature)
+    Write-Host "nas_diskcount    : " $DiskCount
+    Write-Host "nas_raidcount    : " $VolumeCount
     Write-Host "-----------------------------------------"
     Write-Host "disk_state_1 : " (Convert_disk_status_to_text -SNMPValue $AllSNMPData.disk_state_1)
-    Write-Host "disk_temp_1 :  " $disk_temp_1
+    Write-Host "disk_temp_1  : " $disk_temp_1
     Write-Host "-----------------------------------------"
-    if ($DiskCount -eq 2) 
+    if ($DiskCount -ge 2) 
     {
         Write-Host "disk_state_2 : " (Convert_disk_status_to_text -SNMPValue $AllSNMPData.disk_state_2)
-        Write-Host "disk_temp_2 :  " $disk_temp_2
+        Write-Host "disk_temp_2  : " $disk_temp_2
         Write-Host "-----------------------------------------"
         
-        if ($DiskCount -eq 4) 
+        if ($DiskCount -ge 4) 
         {
             Write-Host "disk_state_3 : " (Convert_disk_status_to_text -SNMPValue $AllSNMPData.disk_state_3)
-            Write-Host "disk_temp_3 :   " $disk_temp_3
+            Write-Host "disk_temp_3  : " $disk_temp_3
             Write-Host "-----------------------------------------"
             Write-Host "disk_state_4 : " (Convert_disk_status_to_text -SNMPValue $AllSNMPData.disk_state_4)
-            Write-Host "disk_temp_4 :   " $disk_temp_4
+            Write-Host "disk_temp_4  : " $disk_temp_4
             Write-Host "-----------------------------------------"
         }    
     }    
-    Write-Host "raid_1_FreeSize_in_B :  " ($AllSNMPData.raid_1_FreeSize_in_B)
-    Write-Host "raid_1_TotalSize_in_B : " ($AllSNMPData.raid_1_TotalSize_in_B)
-    if ($AllSNMPData.raid_1_FreeSize_in_B -ne "*object*" -and $AllSNMPData.raid_1_TotalSize_in_B -ne "*object*")
+    
+    if ($AllSNMPData.raid_1_FreeSize_in_B -notlike "*object*" -and $AllSNMPData.raid_1_FreeSize_in_B -notlike "*object*")
     {
-        if ($AllSNMPData.raid_1_FreeSize_in_B -ne "*instance*" -and $AllSNMPData.raid_1_TotalSize_in_B -ne "*instance*")
+        if ($AllSNMPData.raid_1_TotalSize_in_B -notlike "*instance*" -and $AllSNMPData.raid_1_TotalSize_in_B -notlike "*instance*")
         {
-            Write-Host "volume_1_remaining_size_in_% : " ($AllSNMPData.raid_1_FreeSize_in_B / $AllSNMPData.raid_1_TotalSize_in_B * 100)
+            Write-Host "raid_1_FreeSize_in_GB        : " ("{0:N2}" -f ($AllSNMPData.raid_1_FreeSize_in_B /1gb))
+            Write-Host "raid_1_TotalSize_in_GB       : " ("{0:N2}" -f ($AllSNMPData.raid_1_TotalSize_in_B /1gb))
+            Write-Host "volume_1_remaining_size_in_% : " ("{0:N2}" -f ($AllSNMPData.raid_1_FreeSize_in_B / $AllSNMPData.raid_1_TotalSize_in_B * 100))
         }
     }
     Write-Host "raid_1_status : " ($AllSNMPData.raid_1_status)
     Write-Host "-----------------------------------------"
-    if ($VolumeCount -eq 2)
+    if ($VolumeCount -ge 2)
     {
-        if ($AllSNMPData.raid_2_FreeSize_in_B -ne "*object*" -and $AllSNMPData.raid_2_TotalSize_in_B -ne "*object*") 
+        if ($AllSNMPData.raid_2_FreeSize_in_B -notlike "*object*" -and $AllSNMPData.raid_2_FreeSize_in_B -notlike "*object*") 
         {
-            if ($AllSNMPData.raid_2_FreeSize_in_B -ne "*instance*" -and $AllSNMPData.raid_2_TotalSize_in_B -ne "*instance*") 
+            if ($AllSNMPData.raid_2_TotalSize_in_B -notlike "*instance*" -and $AllSNMPData.raid_2_TotalSize_in_B -notlike "*instance*") 
             {
-                Write-Host "volume_2_remaining_size_in_% : " ($AllSNMPData.raid_2_FreeSize_in_B / $AllSNMPData.raid_2_TotalSize_in_B * 100)
-                Write-Host "raid_2_FreeSize_in_B :  " ($AllSNMPData.raid_2_FreeSize_in_B)
-                Write-Host "raid_2_TotalSize_in_B : " ($AllSNMPData.raid_2_TotalSize_in_B)
+                Write-Host "raid_2_FreeSize_in_B         : " ("{0:N2}" -f ($AllSNMPData.raid_2_FreeSize_in_B /1gb))
+                Write-Host "raid_2_TotalSize_in_B        : " ("{0:N2}" -f ($AllSNMPData.raid_2_TotalSize_in_B /1gb))
+                Write-Host "volume_2_remaining_size_in_% : " ("{0:N2}" -f ($AllSNMPData.raid_2_FreeSize_in_B / $AllSNMPData.raid_2_TotalSize_in_B * 100))
             }
             else 
             {
@@ -360,5 +366,6 @@ foreach ($IPAdress in $IPAdressList)
     }
     Write-Host ""
     Write-Host ""
+    $AllSNMPData.Clear()
     #endregion  
 }

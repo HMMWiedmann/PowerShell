@@ -40,42 +40,64 @@ function Convert_hdd_status_to_text
     }
 }
 
-if ($PSVersionTable.PSVersion.Major -lt 5) 
-{
-    Write-Host "Bitte installieren sie WMF 5.1 fuer das entsprechende System."
-    Write-Host "Es wird die PowerShell 5.0 oder 5.1 benoetigt!"
-    $ErrorCount++
-    Exit 1001
-}
-
-[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12
-
-if (!(Get-Module -ListAvailable -Name Snmp)) 
-{
-    Write-Host "PS-Modul SNMP ist nicht installiert"
-    try 
-    {
-        Write-Host "Versuche PS-Modul SNMP von der PowerShellGallery zu installieren!"
-        if (!(Get-PackageProvider -Name NuGet -ListAvailable)) 
-        {
-            Install-PackageProvider -Name NuGet -Force -Confirm:$false
-        }
-
-        Install-Module -Name SNMP -Force -Confirm:$false
-    }
-    catch 
-    {
-        Write-Host "Es gab einen Fehler mit dem PS-Modul SNMP"
-        Write-Host $PSItem.Exception.Message
-        $ErrorCount++
-        Exit 1001
-    }    
-}
-else {    
-    Import-Module SNMP
-}
-
 [int]$errorcount = 0
+
+if ($PSVersionTable.PSVersion.Major -ge 5) 
+{
+    [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12
+
+    if (!(Get-Module -ListAvailable -Name Snmp)) 
+    {
+        Write-Host "PS-Modul SNMP ist nicht installiert"
+        try 
+        {
+            Write-Host "Versuche PS-Modul SNMP von der PowerShellGallery zu installieren!"
+            if (!(Get-PackageProvider -Name NuGet -ListAvailable)) 
+            {
+                Install-PackageProvider -Name NuGet -Force -Confirm:$false
+            }
+
+            Install-Module -Name SNMP -Force -Confirm:$false
+        }
+        catch 
+        {
+            Write-Host "Es gab einen Fehler mit dem PS-Modul SNMP"
+            Write-Host $PSItem.Exception.Message
+            $ErrorCount++
+            Exit 1001
+        }    
+    }
+    else {    
+        Import-Module SNMP
+    }
+}
+else 
+{
+    if (Test-Path -path "C:\Program Files\WindowsPowerShell\Modules\SNMP\*\SNMP.psm1") 
+    {
+        try 
+        {
+            Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope Process -Force
+            Import-Module "C:\Program Files\WindowsPowerShell\Modules\SNMP\1.0.0.1\SNMP.psm1"
+            Add-Type -Path "C:\Program Files\WindowsPowerShell\Modules\SNMP\1.0.0.1\SharpSnmpLib.dll"
+        }
+        catch 
+        {
+            Write-Host "Es gab einen Fehler beim Importieren des SNMP Moduls"
+            Write-Host "Error detail : $($PSItem.Exception.Message)"
+            $ErrorCount++
+            Exit 1001 
+        }        
+    }
+    else 
+    {
+        Write-Host "PS-Modul SNMP ist nicht installiert"
+        $ErrorCount++
+        Exit 1001 
+    }
+}
+
+
 
 $IPAdressList = $IPAdresses.split(",")
 
@@ -99,7 +121,7 @@ foreach ($IPAdress in $IPAdressList)
     # System Infos
     $AllSNMPData.Add("system_hostname", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.13.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
     $AllSNMPData.Add("system_model", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.12.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-    $AllSNMPData.Add("system_cpu_usage", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.1.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
+    # $AllSNMPData.Add("system_cpu_usage", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.1.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
     $AllSNMPData.Add("system_temperature", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.6.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
 
     # HDD Infos
@@ -201,6 +223,7 @@ foreach ($IPAdress in $IPAdressList)
         }            
 
         # System Status
+        <#
         if ($null -ne $AllSNMPData.system_cpu_usage)
         {
             if ([int32]$AllSNMPData.system_cpu_usage -gt 70) 
@@ -209,6 +232,8 @@ foreach ($IPAdress in $IPAdressList)
                 $ErrorCount++
             }
         }
+        #>
+        
         if ($null -ne $AllSNMPData.system_temperature) 
         {
             if ([int32]$AllSNMPData.system_temperature -gt 50) 
@@ -219,13 +244,20 @@ foreach ($IPAdress in $IPAdressList)
         }
 
         # Volume Status
-        if ($AllSNMPData.volume_1_free_size_in_MB -ne "NoSuchObject" -or $AllSNMPData.volume_1_total_size_in_MB -ne "NoSuchInstance")
+        if ($AllSNMPData.volume_1_free_size_in_MB -notlike "*object*" -and $AllSNMPData.volume_1_free_size_in_MB -notlike "*Instance*")
         {
-            if ([int64]$AllSNMPData.volume_1_free_size_in_MB -lt 314572800) 
+            if ($AllSNMPData.volume_1_total_size_in_GB -notlike "*object*" -and $AllSNMPData.volume_1_total_size_in_GB -notlike "*Instance*")
             {
-                Write-Host "Volumen 1 ist fast voll"
-                $ErrorCount++
-            }
+                $AvailableSpaceVol1 = ($AllSNMPData.volume_1_free_size_in_MB / $AllSNMPData.volume_1_total_size_in_MB * 100)
+                if ($AllSNMPData.volume_1_free_size_in_MB -lt 314572800) 
+                {
+                    if ($AvailableSpaceVol1 -lt 20) 
+                    {
+                        Write-Host "Volumen 1 ist fast voll"
+                        $ErrorCount++
+                    }
+                }                
+            }            
         }
         if ($AllSNMPData.volume_1_status -ne "Ready") 
         {
@@ -235,12 +267,19 @@ foreach ($IPAdress in $IPAdressList)
 
         if ($VolumeCount -eq 2) 
         {
-            if ($AllSNMPData.volume_2_total_size_in_MB -ne "NoSuchObject" -or $AllSNMPData.volume_2_total_size_in_MB -ne "NoSuchInstance")
+            if ($AllSNMPData.volume_2_total_size_in_MB -notlike "*object*" -and $AllSNMPData.volume_2_total_size_in_MB -notlike "*Instance*")
             {
-                if ([int64]$AllSNMPData.volume_2_free_size_in_MB -lt 314572800) 
+                if ($AllSNMPData.volume_2_free_size_in_GB -notlike "*object*" -and $AllSNMPData.volume_2_free_size_in_GB -notlike "*Instance*")
                 {
-                    Write-Host "Volumen 2 ist fast voll"
-                    $ErrorCount++
+                    $AvailableSpaceVol2 = ($AllSNMPData.volume_2_free_size_in_MB / $AllSNMPData.volume_2_total_size_in_MB * 100)
+                    if ($AllSNMPData.volume_2_free_size_in_MB -lt 314572800) 
+                    {
+                        if ($AvailableSpaceVol2 -lt 20) 
+                        {
+                            Write-Host "Volumen 2 ist fast voll"
+                            $ErrorCount++
+                        }
+                    }       
                 }
             }
             if ($AllSNMPData.volume_2_status -ne "Ready") 
@@ -262,51 +301,52 @@ foreach ($IPAdress in $IPAdressList)
 
     # Daten ausgeben
     Write-Host "-----------------------------------------"
-    Write-Host "system_hostname :   " ($AllSNMPData.system_hostname)
-    Write-Host "system_cpu_usage :  " ($AllSNMPData.system_cpu_usage)
-    Write-Host "system_temperature :" ($AllSNMPData.system_temperature)
-    Write-Host "system_model :      " ($AllSNMPData.system_model)
+    Write-Host "system_hostname       : " ($AllSNMPData.system_hostname)
+    # Write-Host "system_cpu_usage      : " ($AllSNMPData.system_cpu_usage)
+    Write-Host "system_temperature    : " ($AllSNMPData.system_temperature)
+    Write-Host "system_model          : " ($AllSNMPData.system_model)
+    Write-Host "system_anzahl_disks   : " $DiskCount
+    Write-Host "system_anzahl_volumen : " $VolumeCount
     Write-Host "-----------------------------------------"
     Write-Host "hdd_1_smart_info : " ($AllSNMPData.hdd_1_smart_info)
-    Write-Host "hdd_1_status :     " (Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_1_status)
+    Write-Host "hdd_1_status     : " (Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_1_status)
     Write-Host "-----------------------------------------"
     if ($DiskCount -ge 2) 
     {
         Write-Host "hdd_2_smart_info : " ($AllSNMPData.hdd_2_smart_info)
-        Write-Host "hdd_2_status :     " (Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_2_status)
+        Write-Host "hdd_2_status     : " (Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_2_status)
         Write-Host "-----------------------------------------"
 
         if ($DiskCount -eq 4)
         {
             Write-Host "hdd_3_smart_info : " ($AllSNMPData.hdd_3_smart_info)
-            Write-Host "hdd_3_status :     " (Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_3_status)
+            Write-Host "hdd_3_status     : " (Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_3_status)
             Write-Host "-----------------------------------------"
             Write-Host "hdd_4_smart_info : " ($AllSNMPData.hdd_4_smart_info)
-            Write-Host "hdd_4_status :     " (Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_4_status)
+            Write-Host "hdd_4_status     : " (Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_4_status)
             Write-Host "-----------------------------------------"
         }    
     }
-    Write-Host "volume_1_free_size_in_MB :  " ($AllSNMPData.volume_1_free_size_in_MB)
-    Write-Host "volume_1_total_size_in_MB : " ($AllSNMPData.volume_1_total_size_in_MB)
-    if ($AllSNMPData.volume_1_free_size_in_MB -ne "NoSuchObject" -and $AllSNMPData.volume_1_total_size_in_MB -ne "NoSuchObject")
+    if ($AllSNMPData.volume_1_free_size_in_MB -notlike "*object*" -and $AllSNMPData.volume_1_free_size_in_MB -notlike "*object*")
     {
-        if ($AllSNMPData.volume_1_free_size_in_MB -ne "NoSuchInstance" -and $AllSNMPData.volume_1_total_size_in_MB -ne "NoSuchInstance")
+        if ($AllSNMPData.volume_1_total_size_in_MB -notlike "*Instance*" -and $AllSNMPData.volume_1_total_size_in_MB -notlike "*Instance*")
         {
-            Write-Host "volume_1_remaining_size_in_% : " ($AllSNMPData.volume_1_free_size_in_MB / $AllSNMPData.volume_1_total_size_in_MB * 100)
+            Write-Host "volume_1_free_size_in_GB     : " ("{0:N2}" -f ($AllSNMPData.volume_1_free_size_in_MB /1mb))
+            Write-Host "volume_1_total_size_in_GB    : " ("{0:N2}" -f ($AllSNMPData.volume_1_total_size_in_MB /1mb))
+            Write-Host "volume_1_remaining_size_in_% : " ("{0:N2}" -f $AvailableSpaceVol1)
         }
     }
     Write-Host "volume_1_status : " ($AllSNMPData.volume_1_status)
     Write-Host "-----------------------------------------"
     if ($VolumeCount -eq 2)
-    {
-        
-        if ($AllSNMPData.volume_2_free_size_in_MB -ne "NoSuchObject" -and $AllSNMPData.volume_2_total_size_in_MB -ne "NoSuchObject") 
+    {        
+        if ($AllSNMPData.volume_2_free_size_in_MB -notlike "*object*" -and $AllSNMPData.volume_2_free_size_in_MB -notlike "*object*") 
         {
-            if ($AllSNMPData.volume_2_free_size_in_MB -ne "NoSuchInstance" -and $AllSNMPData.volume_2_total_size_in_MB -ne "NoSuchInstance") 
+            if ($AllSNMPData.volume_2_total_size_in_MB -notlike "*Instance*" -and $AllSNMPData.volume_2_total_size_in_MB -notlike "*Instance*") 
             {
-                Write-Host "volume_2_free_size_in_MB :  " ($AllSNMPData.volume_2_free_size_in_MB)
-                Write-Host "volume_2_total_size_in_MB : " ($AllSNMPData.volume_2_total_size_in_MB)                    
-                Write-Host "volume_2_remaining_size_in_% : " ($AllSNMPData.volume_2_free_size_in_MB / $AllSNMPData.volume_2_total_size_in_MB * 100)
+                Write-Host "volume_2_free_size_in_GB     : " ("{0:N2}" -f ($AllSNMPData.volume_2_free_size_in_MB /1mb))
+                Write-Host "volume_2_total_size_in_GB    : " ("{0:N2}" -f ($AllSNMPData.volume_2_total_size_in_MB /1mb))                    
+                Write-Host "volume_2_remaining_size_in_% : " ("{0:N2}" -f $AvailableSpaceVol2)
             }
             else 
             {
@@ -314,7 +354,7 @@ foreach ($IPAdress in $IPAdressList)
                 $ErrorCount++
             }     
         }
-        else 
+        else
         {
             Write-Host "Volume 2 kann nicht ausgelesen werden"
             $ErrorCount++
