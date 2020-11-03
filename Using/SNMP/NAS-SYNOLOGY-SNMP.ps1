@@ -53,8 +53,32 @@ function Convert_nas_satus_to_text
         Default {
             "unknown"
         }
+    }    
+}
+function Convert_raid_status_to_text
+{
+    param (
+        # Wert dem SNMP zurueck gibt
+        [Parameter(Mandatory = $true)]
+        [string]$SNMPValue
+    )
+
+    switch ($SNMPValue) 
+    {
+        "1" { return "Normal(1): The raid functions normally" }
+        "11" { return "Degrade(11): Degrade happens when a tolerable failure of disk(s) occurs" }
+        "12" { return "Crashed(12): Raid has crashed and just uses for read-only operation" }
+        "2" { return "Repairing(2)" }
+        "3" { return "Migrating(3)" }
+        "4" { return "Expanding(4)" }
+        "5" { return "Deleting(5)" }
+        "6" { return "Creating(6)" }
+        "7" { return "RaidSyncing(7)" }
+        "8" { return "RaidParityChecking(8)" }
+        "9" { return "RaidAssembling(9)" }
+        "10" { return "Canceling(10)" }
+        Default { return "unknown" }
     }
-    
 }
 #endregion
 
@@ -108,7 +132,7 @@ foreach ($IPAdress in $IPAdressList)
     {
         $Value = $null
         $Value = (Get-SnmpData -IP $IPAdress -OID (".1.3.6.1.4.1.6574.2.1.1.5." + [string]$Diski) -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data
-        if ($value -notlike "*Instance*" -or $Value -notlike "*object*" -or $Value -ne "0")
+        if ($value -notlike "*Instance*" -and $Value -notlike "*object*" -and $Value -ne "0" -and $null -ne $Value)
         {
             $DiskCount++
         }
@@ -121,10 +145,10 @@ foreach ($IPAdress in $IPAdressList)
     { 
         $Value = $null
         $Value = (Get-SnmpData -IP $IPAdress -OID (".1.3.6.1.4.1.6574.3.1.1.3." + [string]$Voli) -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data
-        if ($value -notlike "*Instance*" -or $Value -notlike "*object*" -or $Value -ne "0")
+        if ($value -notlike "*Instance*" -and $Value -notlike "*object*" -and $Value -ne "0" -and $null -ne $Value)
         {
             $VolumeCount++                
-        }        
+        }
     }
     #endregion
 
@@ -302,6 +326,7 @@ foreach ($IPAdress in $IPAdressList)
 
     #region Daten ausgeben
     Write-Host "-----------------------------------------"
+    Write-Host "ip_address       : " $IPAdress
     Write-Host "nas_modelName    : " ($AllSNMPData.nas_modelName)
     Write-Host "nas_os_version   : " ($AllSNMPData.nas_os_version)
     Write-Host "nas_systemstatus : " (Convert_nas_satus_to_text -SNMPValue $AllSNMPData.nas_systemstatus)
@@ -329,39 +354,39 @@ foreach ($IPAdress in $IPAdressList)
         }    
     }    
     
-    if ($AllSNMPData.raid_1_FreeSize_in_B -notlike "*object*" -and $AllSNMPData.raid_1_FreeSize_in_B -notlike "*object*")
+    if ($AllSNMPData.raid_1_FreeSize_in_B -notlike "*object*" -and `
+        $AllSNMPData.raid_1_FreeSize_in_B -notlike "*object*" -and `
+        $AllSNMPData.raid_1_TotalSize_in_B -notlike "*instance*" -and `
+        $AllSNMPData.raid_1_TotalSize_in_B -notlike "*instance*")
     {
-        if ($AllSNMPData.raid_1_TotalSize_in_B -notlike "*instance*" -and $AllSNMPData.raid_1_TotalSize_in_B -notlike "*instance*")
-        {
-            Write-Host "raid_1_FreeSize_in_GB        : " ("{0:N2}" -f ($AllSNMPData.raid_1_FreeSize_in_B /1gb))
-            Write-Host "raid_1_TotalSize_in_GB       : " ("{0:N2}" -f ($AllSNMPData.raid_1_TotalSize_in_B /1gb))
-            Write-Host "volume_1_remaining_size_in_% : " ("{0:N2}" -f ($AllSNMPData.raid_1_FreeSize_in_B / $AllSNMPData.raid_1_TotalSize_in_B * 100))
-        }
+        Write-Host "raid_1_FreeSize_in_GB        : " ("{0:N2}" -f ($AllSNMPData.raid_1_FreeSize_in_B /1gb))
+        Write-Host "raid_1_TotalSize_in_GB       : " ("{0:N2}" -f ($AllSNMPData.raid_1_TotalSize_in_B /1gb))
+        Write-Host "volume_1_remaining_size_in_% : " ("{0:N2}" -f ($AllSNMPData.raid_1_FreeSize_in_B / $AllSNMPData.raid_1_TotalSize_in_B * 100))
     }
-    Write-Host "raid_1_status : " ($AllSNMPData.raid_1_status)
+    else 
+    {
+        Write-Host "Volume 2 kann nicht ausgelesen werden"
+        $ErrorCount++
+    }
+    Write-Host "raid_1_status : " (Convert_raid_status_to_text -SNMPValue $AllSNMPData.raid_1_status)
     Write-Host "-----------------------------------------"
     if ($VolumeCount -ge 2)
     {
-        if ($AllSNMPData.raid_2_FreeSize_in_B -notlike "*object*" -and $AllSNMPData.raid_2_FreeSize_in_B -notlike "*object*") 
+        if ($AllSNMPData.raid_2_FreeSize_in_B -notlike "*object*" -and `
+            $AllSNMPData.raid_2_FreeSize_in_B -notlike "*object*" -and `
+            $AllSNMPData.raid_2_TotalSize_in_B -notlike "*instance*" -and `
+            $AllSNMPData.raid_2_TotalSize_in_B -notlike "*instance*")
         {
-            if ($AllSNMPData.raid_2_TotalSize_in_B -notlike "*instance*" -and $AllSNMPData.raid_2_TotalSize_in_B -notlike "*instance*") 
-            {
-                Write-Host "raid_2_FreeSize_in_B         : " ("{0:N2}" -f ($AllSNMPData.raid_2_FreeSize_in_B /1gb))
-                Write-Host "raid_2_TotalSize_in_B        : " ("{0:N2}" -f ($AllSNMPData.raid_2_TotalSize_in_B /1gb))
-                Write-Host "volume_2_remaining_size_in_% : " ("{0:N2}" -f ($AllSNMPData.raid_2_FreeSize_in_B / $AllSNMPData.raid_2_TotalSize_in_B * 100))
-            }
-            else 
-            {
-                Write-Host "Volume 2 kann nicht ausgelesen werden"
-                $ErrorCount++
-            }
+            Write-Host "raid_2_FreeSize_in_B         : " ("{0:N2}" -f ($AllSNMPData.raid_2_FreeSize_in_B /1gb))
+            Write-Host "raid_2_TotalSize_in_B        : " ("{0:N2}" -f ($AllSNMPData.raid_2_TotalSize_in_B /1gb))
+            Write-Host "volume_2_remaining_size_in_% : " ("{0:N2}" -f ($AllSNMPData.raid_2_FreeSize_in_B / $AllSNMPData.raid_2_TotalSize_in_B * 100))
         }
         else 
         {
             Write-Host "Volume 2 kann nicht ausgelesen werden"
             $ErrorCount++
         }
-        Write-Host "raid_2_status : " ($AllSNMPData.raid_2_status)
+        Write-Host "raid_2_status : " (Convert_raid_status_to_text -SNMPValue $AllSNMPData.raid_2_status)
         Write-Host "-----------------------------------------"
     }
     Write-Host ""
