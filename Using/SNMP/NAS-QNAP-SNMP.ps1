@@ -166,61 +166,44 @@ foreach ($IPAdress in $IPAdressList)
 
     try 
     {
-        # HDD Smart info
-        if ($AllSNMPData.hdd_1_smart_info -ne "GOOD") 
+        # HDD Info Check
+        if ($AllSNMPData.hdd_1_smart_info -ne "GOOD" -or $AllSNMPData.hdd_1_status -ne "0") 
         {
-            Write-Host "hdd_1_smart_info hat einen Fehler gemeldet"
+            Write-Host "HDD 1 hat einen Fehler"
             $ErrorCount++
         }
         if ($DiskCount -ge 2)
         {
-            if ($AllSNMPData.hdd_2_smart_info -ne "GOOD") 
+            if ($AllSNMPData.hdd_2_status -ne "-5" -or $AllSNMPData.hdd_2_smart_info -notlike "*--*") 
             {
-                Write-Host "hdd_2_smart_info hat einen Fehler gemeldet"
-                $ErrorCount++
-            }
-            if ($DiskCount -eq 4) 
-            {
-                if ($AllSNMPData.hdd_3_smart_info -ne "GOOD") 
+                if ($AllSNMPData.hdd_2_status -ne "0" -or $AllSNMPData.hdd_2_smart_info -ne "GOOD") 
                 {
-                    Write-Host "hdd_3_smart_info hat einen Fehler gemeldet"
-                    $ErrorCount++
-                }                    
-                if ($AllSNMPData.hdd_4_smart_info -ne "GOOD") 
-                {
-                    Write-Host "hdd_4_smart_info hat einen Fehler gemeldet"
+                    Write-Host "HDD2 hat einen Fehler"
                     $ErrorCount++
                 }
             }
-        }
 
-        # HDD Status
-        if ($AllSNMPData.hdd_1_status -ne "0") 
-        {
-            Write-Host "hdd_1_status hat einen Fehler gemeldet"
-            $ErrorCount++
-        }
-        if ($DiskCount -ge 2) 
-        {
-            if ($AllSNMPData.hdd_2_status -ne "0") 
+            if ($DiskCount -ge 4)
             {
-                Write-Host "hdd_2_status hat einen Fehler gemeldet"
-                $ErrorCount++
-            }            
-            if ($DiskCount -eq 4) 
-            {
-                if ($AllSNMPData.hdd_3_status -ne "0") 
+                if ($AllSNMPData.hdd_3_status -ne "-5" -or $AllSNMPData.hdd_3_smart_info -notlike "*--*") 
                 {
-                    Write-Host "hdd_3_status hat einen Fehler gemeldet"
-                    $ErrorCount++
-                }
-                if ($AllSNMPData.hdd_4_status -ne "0") 
+                    if ($AllSNMPData.hdd_3_status -ne "0" -or $AllSNMPData.hdd_3_smart_info -ne "GOOD") 
+                    {
+                        Write-Host "HDD3 hat einen Fehler"
+                        $ErrorCount++
+                    }
+                }                
+
+                if ($AllSNMPData.hdd_4_status -ne "-5" -or $AllSNMPData.hdd_4_smart_info -notlike "*--*") 
                 {
-                    Write-Host "hdd_4_status hat einen Fehler gemeldet"
-                    $ErrorCount++
+                    if ($AllSNMPData.hdd_4_status -ne "0" -or $AllSNMPData.hdd_4_smart_info -ne "GOOD") 
+                    {
+                        Write-Host "HDD4 hat einen Fehler"
+                        $ErrorCount++
+                    }
                 }
             }
-        }            
+        }          
 
         # System Status
         <#
@@ -249,13 +232,10 @@ foreach ($IPAdress in $IPAdressList)
             if ($AllSNMPData.volume_1_total_size_in_GB -notlike "*object*" -and $AllSNMPData.volume_1_total_size_in_GB -notlike "*Instance*")
             {
                 $AvailableSpaceVol1 = ($AllSNMPData.volume_1_free_size_in_MB / $AllSNMPData.volume_1_total_size_in_MB * 100)
-                if ($AllSNMPData.volume_1_free_size_in_MB -lt 314572800) 
+                if ([int64]$AllSNMPData.volume_1_free_size_in_MB -lt 314572800 -and $AvailableSpaceVol1 -lt 20) 
                 {
-                    if ($AvailableSpaceVol1 -lt 20) 
-                    {
-                        Write-Host "Volumen 1 ist fast voll"
-                        $ErrorCount++
-                    }
+                    Write-Host "Volumen 1 ist fast voll"
+                    $ErrorCount++
                 }                
             }            
         }
@@ -272,13 +252,10 @@ foreach ($IPAdress in $IPAdressList)
                 if ($AllSNMPData.volume_2_free_size_in_GB -notlike "*object*" -and $AllSNMPData.volume_2_free_size_in_GB -notlike "*Instance*")
                 {
                     $AvailableSpaceVol2 = ($AllSNMPData.volume_2_free_size_in_MB / $AllSNMPData.volume_2_total_size_in_MB * 100)
-                    if ($AllSNMPData.volume_2_free_size_in_MB -lt 314572800) 
+                    if ([int64]$AllSNMPData.volume_2_free_size_in_MB -lt 314572800 -and $AvailableSpaceVol2 -lt 20) 
                     {
-                        if ($AvailableSpaceVol2 -lt 20) 
-                        {
-                            Write-Host "Volumen 2 ist fast voll"
-                            $ErrorCount++
-                        }
+                        Write-Host "Volumen 2 ist fast voll"
+                        $ErrorCount++
                     }       
                 }
             }
