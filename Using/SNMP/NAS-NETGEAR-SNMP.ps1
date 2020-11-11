@@ -200,7 +200,7 @@ foreach ($IPAdress in $IPAdressList)
         # Volume Status
         if ($AllSNMPData.volume_1_free_size_in_MB -notlike "*object*" -or $AllSNMPData.volume_1_total_size_in_MB -notlike "*Instance*")
         {
-            if ([int64]$AllSNMPData.volume_1_free_size_in_MB -lt 3092) 
+            if ([int64]$AllSNMPData.volume_1_free_size_in_MB -lt 2048) 
             {
                 Write-Host "Volumen 1 ist fast voll"
                 $ErrorCount++
@@ -216,7 +216,7 @@ foreach ($IPAdress in $IPAdressList)
         {
             if ($AllSNMPData.volume_2_total_size_in_MB -notlike "*object*" -or $AllSNMPData.volume_2_total_size_in_MB -notlike "*Instance*")
             {
-                if ([int64]$AllSNMPData.volume_2_free_size_in_MB -lt 3092) 
+                if ([int64]$AllSNMPData.volume_2_free_size_in_MB -lt 2048) 
                 {
                     Write-Host "Volumen 2 ist fast voll"
                     $ErrorCount++
@@ -261,8 +261,6 @@ foreach ($IPAdress in $IPAdressList)
         }    
     }
     Write-Host "nas_os_version            : " ($AllSNMPData.nas_os_version)
-    Write-Host "volume_1_free_size_in_MB  : " ($AllSNMPData.volume_1_free_size_in_MB)
-    Write-Host "volume_1_total_size_in_MB : " ($AllSNMPData.volume_1_total_size_in_MB)
     if ($AllSNMPData.volume_1_free_size_in_MB -notlike "*object*" -and $AllSNMPData.volume_1_free_size_in_MB -notlike "*object*")
     {
         if ($AllSNMPData.volume_1_total_size_in_MB -notlike "*Instance*" -and $AllSNMPData.volume_1_total_size_in_MB -notlike "*Instance*")

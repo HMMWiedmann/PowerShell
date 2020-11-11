@@ -284,7 +284,7 @@ foreach ($IPAdress in $IPAdressList)
 
         if ($AllSNMPData.raid_1_FreeSize_in_B -notlike "*object*" -and $AllSNMPData.raid_1_FreeSize_in_B -notlike "*instance*")
         {
-            if ([int64]$AllSNMPData.raid_1_FreeSize_in_B -lt 322122547200) 
+            if ([int64]$AllSNMPData.raid_1_FreeSize_in_B -lt 214748364800) 
             {
                 Write-Host "Volumen 1 ist fast voll"
                 $ErrorCount++
@@ -300,7 +300,7 @@ foreach ($IPAdress in $IPAdressList)
         {
             if ($AllSNMPData.raid_2_FreeSize_in_B -notlike "*object*" -and $AllSNMPData.raid_2_FreeSize_in_B -notlike "*instance*")
             {
-                if ([int64]$AllSNMPData.raid_2_FreeSize_in_B -lt 322122547200) 
+                if ([int64]$AllSNMPData.raid_2_FreeSize_in_B -lt 214748364800) 
                 {
                     Write-Host "Volumen 2 ist fast voll"
                     $ErrorCount++

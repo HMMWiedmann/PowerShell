@@ -17,7 +17,7 @@ function Convert_hdd_status_to_text
         [string]$SNMPValue
     )
     
-    switch ($SNMPValue) 
+    switch ($SNMPValue)
     {
         "0" { 
             return "ready"
@@ -152,11 +152,26 @@ foreach ($IPAdress in $IPAdressList)
     $AllSNMPData.Add("volume_1_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.17.1.6.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
     $AllSNMPData.Add("volume_1_total_size_in_MB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.17.1.4.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
 
-    if ($VolumeCount -eq 2) 
+    if ($VolumeCount -ge 2) 
     {
         $AllSNMPData.Add("volume_2_free_size_in_MB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.17.1.5.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
         $AllSNMPData.Add("volume_2_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.17.1.6.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
         $AllSNMPData.Add("volume_2_total_size_in_MB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.17.1.4.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
+        if ($AllSNMPData.volume_2_free_size_in_MB -like "*object*" -or $AllSNMPData.volume_2_free_size_in_MB -like "*instance*") 
+        {
+            $AllSNMPData.Remove("volume_2_free_size_in_MB")
+            $AllSNMPData.Add("volume_2_free_size_in_MB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.4.1.1.1.2.3.2.1.4.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
+        }
+        if ($AllSNMPData.volume_2_status -like "*object*" -or $AllSNMPData.volume_2_status -like "*instance*") 
+        {
+            $AllSNMPData.Remove("volume_2_status")
+            $AllSNMPData.Add("volume_2_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.4.1.1.1.2.3.2.1.5.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
+        }
+        if ($AllSNMPData.volume_2_total_size_in_MB -like "*object*" -or $AllSNMPData.volume_2_total_size_in_MB -like "*instance*") 
+        {
+            $AllSNMPData.Remove("volume_2_total_size_in_MB")
+            $AllSNMPData.Add("volume_2_total_size_in_MB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.4.1.1.1.2.3.2.1.3.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
+        }
     }
     elseif ($VolumeCount -gt 2)
     {
@@ -164,6 +179,12 @@ foreach ($IPAdress in $IPAdressList)
         $ErrorCount++
     }
 
+    if ($null -eq $AllSNMPData) 
+    {
+        Write-Host "Es gab einen Fehler beim Auslesen der Daten`nAllSNMPData ist leer"
+        $ErrorCount++
+        Exit 1001
+    }
     try 
     {
         # HDD Info Check
@@ -232,12 +253,12 @@ foreach ($IPAdress in $IPAdressList)
             if ($AllSNMPData.volume_1_total_size_in_GB -notlike "*object*" -and $AllSNMPData.volume_1_total_size_in_GB -notlike "*Instance*")
             {
                 $AvailableSpaceVol1 = ($AllSNMPData.volume_1_free_size_in_MB / $AllSNMPData.volume_1_total_size_in_MB * 100)
-                if ([int64]$AllSNMPData.volume_1_free_size_in_MB -lt 314572800 -and $AvailableSpaceVol1 -lt 20) 
+                if ([int64]$AllSNMPData.volume_1_free_size_in_MB -lt 209715200 -and $AvailableSpaceVol1 -lt 20) 
                 {
                     Write-Host "Volumen 1 ist fast voll"
                     $ErrorCount++
-                }                
-            }            
+                }
+            }
         }
         if ($AllSNMPData.volume_1_status -ne "Ready") 
         {
@@ -252,7 +273,7 @@ foreach ($IPAdress in $IPAdressList)
                 if ($AllSNMPData.volume_2_free_size_in_GB -notlike "*object*" -and $AllSNMPData.volume_2_free_size_in_GB -notlike "*Instance*")
                 {
                     $AvailableSpaceVol2 = ($AllSNMPData.volume_2_free_size_in_MB / $AllSNMPData.volume_2_total_size_in_MB * 100)
-                    if ([int64]$AllSNMPData.volume_2_free_size_in_MB -lt 314572800 -and $AvailableSpaceVol2 -lt 20) 
+                    if ([int64]$AllSNMPData.volume_2_free_size_in_MB -lt 209715200 -and $AvailableSpaceVol2 -lt 20) 
                     {
                         Write-Host "Volumen 2 ist fast voll"
                         $ErrorCount++
@@ -276,7 +297,7 @@ foreach ($IPAdress in $IPAdressList)
         Write-Host ""
     }     
 
-    # Daten ausgeben
+    #region Daten ausgeben
     Write-Host "-----------------------------------------"
     Write-Host "system_hostname       : " ($AllSNMPData.system_hostname)
     # Write-Host "system_cpu_usage      : " ($AllSNMPData.system_cpu_usage)
@@ -341,4 +362,5 @@ foreach ($IPAdress in $IPAdressList)
     }
     Write-Host ""
     Write-Host ""
+    #endregion
 }
