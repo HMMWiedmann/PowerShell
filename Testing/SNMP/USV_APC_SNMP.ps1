@@ -185,6 +185,7 @@ foreach ($IPAdress in $IPAdressList)
     #region Daten sammeln
     $AllSNMPData = @{}
 
+    $AllSNMPData.Add("ups_basic_ident_model", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.318.1.1.1.1.1.1.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
     $AllSNMPData.Add("ups_adv_battery_capacity", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.318.1.1.1.2.2.1.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
     $AllSNMPData.Add("ups_adv_battery_replace_indicator", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.318.1.1.1.2.2.4.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
     $AllSNMPData.Add("ups_adv_battery_temperature", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.318.1.1.1.2.2.2.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
@@ -259,6 +260,7 @@ foreach ($IPAdress in $IPAdressList)
 
     #region Daten ausgeben
     Write-Host "------------------------------------------------------------"
+    Write-Host "ups_basic_ident_model               : " ($AllSNMPData.ups_basic_ident_model)
     Write-Host "ups_adv_battery_capacity            : " ($AllSNMPData.ups_adv_battery_capacity) "%"
     Write-Host "ups_adv_battery_replace_indicator   : " (Convert_ups_adv_battery_replace_indicator -SNMPValue $AllSNMPData.ups_adv_battery_replace_indicator)
     Write-Host "ups_adv_battery_temperature         : " ($AllSNMPData.ups_adv_battery_temperature)

@@ -206,13 +206,15 @@ foreach ($IPAdress in $IPAdressList)
     try 
     {
         # System 
-        if ($AllSNMPData.nas_upgradeavailable -ne "2") 
+        <#
+                if ($AllSNMPData.nas_upgradeavailable -ne "2") 
         {
             if ($AllSNMPData.nas_upgradeavailable -eq "1") 
             {
                 Write-Host "Es ist ein neues DSM Update verfuegbar"
             }            
         }
+        #>
         if ($AllSNMPData.nas_systemstatus -ne "1" -or $AllSNMPData.nas_systemtemperature -gt "50") 
         {
             Write-Host "Das System meldet einen Fehler"
