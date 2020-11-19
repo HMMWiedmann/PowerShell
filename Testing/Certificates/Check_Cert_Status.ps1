@@ -1,8 +1,8 @@
-#$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference = "SilentlyContinue"
 [int32]$errorcounter = 0
-# $minimumCertAgeDays = 14
+$minimumCertAgeDays =  8
 $timeoutMilliseconds = 32000
-# $urls = "https://mail.hm-netzwerke.de"
+$urls = @($args[0])
 [int32]$counter = 0
 #disabling the cert validation check. This is what makes this whole thing work with invalid certs...
 [Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
@@ -37,11 +37,11 @@ foreach ($url in $urls)
  
     if ($certExpiresIn -gt $minimumCertAgeDays)
     {
-        Write-Host "$certExpiresIn Tage verbleibend fuer das Zertifikat von $url`nthumbprint: $certThumbprint"
+        Write-Host "$certExpiresIn Tage für $url, [$expiration]"
     }
     else
     {
-        Write-Host "$certExpiresIn Tage verbleibend fuer das Zertifikat von $url. Details:`n`nZertifikat Name: $certName`npublic key: $certPublicKeyString`nserial number: $certSerialNumber`nthumbprint: $certThumbprint`neffective date: $certEffectiveDate`nissuer: $certIssuer"
+        Write-Host "Zertifikat fuer $url laeuft in $certExpiresIn Tagen aus [$expiration] grenzwert ist $minimumCertAgeDays Tage. Details:`n`nZertifikat Name: $certName`npublic key: $certPublicKeyString`nserial number: $certSerialNumber`nthumbprint: $certThumbprint`neffective date: $certEffectiveDate`nissuer: $certIssuer"
         $errorcounter++
     }
     Remove-Variable req

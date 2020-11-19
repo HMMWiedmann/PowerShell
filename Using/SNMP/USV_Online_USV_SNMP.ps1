@@ -95,6 +95,63 @@ function Convert_ups_output_status
         }
     }
 }
+function Convert_ups_last_test_result 
+{
+    param (
+        # Wert dem SNMP zurueck gibt
+        [Parameter(Mandatory = $true)]
+        [string]$SNMPValue
+    )
+    
+    switch ($SNMPValue) 
+    {
+        "0" {
+            return "undefined"
+        }
+        "1" {
+            return "success"
+        }
+        "2" { 
+            return "failed"
+        }
+        "3" {
+            return "notSupported"
+        }
+        Default {
+            "Error: Value not found"
+        }
+    }
+}
+function Convert_ups_last_test_performed
+{
+    param (
+        # Wert dem SNMP zurueck gibt
+        [Parameter(Mandatory = $true)]
+        [string]$SNMPValue
+    )
+    
+    switch ($SNMPValue) 
+    {
+        "0" {
+            return "noTest"
+        }
+        "1" {
+            return "batteryTest"
+        }
+        "2" { 
+            return "batteryCustomTest"
+        }
+        "3" {
+            return "batteryFullTest"
+        }
+        "4" {
+            return "selfTest"
+        }
+        Default {
+            "Error: Value not found"
+        }
+    }
+}
 #endregion
 
 [int]$Errorcount = 0
@@ -172,25 +229,28 @@ foreach ($IPAdress in $IPAdressList)
 
     if ($SNMPAdapter -eq $true)
     {
-        $AllSNMPData.Add("ups_battery_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.2.1.33.1.2.1.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-        $AllSNMPData.Add("ups_battery_temperature", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.2.1.33.1.2.7.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-        $AllSNMPData.Add("ups_estimated_charge_remaining", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.2.1.33.1.2.4.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-        $AllSNMPData.Add("ups_estimated_minutes_remaining", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.2.1.33.1.2.3.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-        $AllSNMPData.Add("ups_output_percent_load", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.2.1.33.1.4.4.1.5.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-        $AllSNMPData.Add("ups_output_power", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.2.1.33.1.4.4.1.4.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-        $AllSNMPData.Add("ups_test_results_detail", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.2.1.33.1.7.4.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-        $AllSNMPData.Add("ups_test_results_summary", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.2.1.33.1.7.3.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-        $AllSNMPData.Add("ups_test_start_time", ((Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.2.1.33.1.7.5.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data))
-        $AllSNMPData.Add("ups_test_elapsed_time", ((Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.2.1.33.1.7.6.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data))
+        $AllSNMPData.Add("ups_battery_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.2.1.33.1.2.1.0" -Community $CommunityString -UDPport $SNMPPort -Version V2 -ErrorAction SilentlyContinue).Data)
+        $AllSNMPData.Add("ups_battery_temperature", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.2.1.33.1.2.7.0" -Community $CommunityString -UDPport $SNMPPort -Version V2 -ErrorAction SilentlyContinue).Data)
+        $AllSNMPData.Add("ups_estimated_charge_remaining", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.2.1.33.1.2.4.0" -Community $CommunityString -UDPport $SNMPPort -Version V2 -ErrorAction SilentlyContinue).Data)
+        $AllSNMPData.Add("ups_estimated_minutes_remaining", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.2.1.33.1.2.3.0" -Community $CommunityString -UDPport $SNMPPort -Version V2 -ErrorAction SilentlyContinue).Data)
+        $AllSNMPData.Add("ups_output_percent_load", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.2.1.33.1.4.4.1.5.1" -Community $CommunityString -UDPport $SNMPPort -Version V2 -ErrorAction SilentlyContinue).Data)
+        $AllSNMPData.Add("ups_output_power", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.2.1.33.1.4.4.1.4.1" -Community $CommunityString -UDPport $SNMPPort -Version V2 -ErrorAction SilentlyContinue).Data)
+        $AllSNMPData.Add("ups_test_results_detail", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.2.1.33.1.7.4.0" -Community $CommunityString -UDPport $SNMPPort -Version V2 -ErrorAction SilentlyContinue).Data)
+        $AllSNMPData.Add("ups_test_results_summary", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.2.1.33.1.7.3.0" -Community $CommunityString -UDPport $SNMPPort -Version V2 -ErrorAction SilentlyContinue).Data)
+        $AllSNMPData.Add("ups_test_start_time", ((Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.2.1.33.1.7.5.0" -Community $CommunityString -UDPport $SNMPPort -Version V2 -ErrorAction SilentlyContinue).Data))
+        $AllSNMPData.Add("ups_test_elapsed_time", ((Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.2.1.33.1.7.6.0" -Community $CommunityString -UDPport $SNMPPort -Version V2 -ErrorAction SilentlyContinue).Data))
     }
     elseif ($UPSMAN -eq $true) 
     {
-        $AllSNMPData.Add("ups_ident_model_name", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.1356.1.1.1.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-        $AllSNMPData.Add("ups_battery_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.1356.1.2.1.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-        $AllSNMPData.Add("ups_Battery_Temperature", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.1356.1.2.4.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-        $AllSNMPData.Add("ups_battery_capacity", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.1356.1.2.2.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-        $AllSNMPData.Add("ups_output_load", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.1356.1.4.2.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-        $AllSNMPData.Add("ups_Output_Status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.1356.1.4.1.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
+        $AllSNMPData.Add("ups_ident_model_name", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.1356.1.1.1.0" -Community $CommunityString -UDPport $SNMPPort -Version V2 -ErrorAction SilentlyContinue).Data)
+        $AllSNMPData.Add("ups_battery_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.1356.1.2.1.0" -Community $CommunityString -UDPport $SNMPPort -Version V2 -ErrorAction SilentlyContinue).Data)
+        $AllSNMPData.Add("ups_Battery_Temperature", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.1356.1.2.4.0" -Community $CommunityString -UDPport $SNMPPort -Version V2 -ErrorAction SilentlyContinue).Data)
+        $AllSNMPData.Add("ups_battery_capacity", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.1356.1.2.2.0" -Community $CommunityString -UDPport $SNMPPort -Version V2 -ErrorAction SilentlyContinue).Data)
+        $AllSNMPData.Add("ups_output_load", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.1356.1.4.2.0" -Community $CommunityString -UDPport $SNMPPort -Version V2 -ErrorAction SilentlyContinue).Data)
+        $AllSNMPData.Add("ups_Output_Status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.1356.1.4.1.0" -Community $CommunityString -UDPport $SNMPPort -Version V2 -ErrorAction SilentlyContinue).Data)
+        $AllSNMPData.Add("ups_last_test_result", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.1356.1.5.3.0" -Community $CommunityString -UDPport $SNMPPort -Version V2 -ErrorAction SilentlyContinue).Data)
+        $AllSNMPData.Add("ups_last_test_performed", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.1356.1.5.2.0" -Community $CommunityString -UDPport $SNMPPort -Version V2 -ErrorAction SilentlyContinue).Data)
+
     }
     else 
     {
@@ -209,7 +269,12 @@ foreach ($IPAdress in $IPAdressList)
             Write-Host (Convert_ups_output_status -SNMPValue $AllSNMPData.ups_battery_status)
             $Errorcount++
         }
-        if ($AllSNMPData.ups_battery_temperature -notlike "*object*" -and $AllSNMPData.ups_battery_temperature -notlike "*instance*") 
+        if ($AllSNMPData.ups_battery_temperature -eq "-9999")
+        {
+            Write-Host "Es ist vermutlich das falsche Modell angegeben."
+            Write-Host "ups_battery_temperature : " ($AllSNMPData.ups_battery_temperature)            
+        }
+        elseif ($AllSNMPData.ups_battery_temperature -notlike "*object*" -and $AllSNMPData.ups_battery_temperature -notlike "*instance*") 
         {
             if ([int32]$AllSNMPData.ups_battery_temperature -gt 45)
             {
@@ -243,7 +308,13 @@ foreach ($IPAdress in $IPAdressList)
         }    
         elseif ($UPSMAN -eq $true) 
         {
-            if ($AllSNMPData.ups_battery_capacity -notlike "*object*" -and $AllSNMPData.ups_battery_capacity -notlike "*instance*") 
+            if ($AllSNMPData.ups_battery_capacity -eq "-9999")
+            {
+                Write-Host "Es ist vermutlich das falsche Modell angegeben."
+                Write-Host "ups_battery_capacity : " ($AllSNMPData.ups_battery_capacity) "%"
+                $Errorcount++
+            }
+            elseif ($AllSNMPData.ups_battery_capacity -notlike "*object*" -and $AllSNMPData.ups_battery_capacity -notlike "*instance*") 
             {
                 if([int32]$AllSNMPData.ups_battery_capacity -lt 80)
                 {
@@ -262,7 +333,20 @@ foreach ($IPAdress in $IPAdressList)
             if ($AllSNMPData.ups_Output_Status -ne "2") 
             {
                 Write-Host (Convert_ups_output_status -SNMPValue $AllSNMPData.ups_Output_Status)
+                $Errorcount++
+            }
+            <#
+            if ($AllSNMPData.ups_last_test_result -ne "1")
+            {
+                if ($AllSNMPData.ups_last_test_result -eq "0") 
+                {
+                    Write-Host "Es wurde vermutlich noch kein Test gemacht"
+                }
+                Write-Host "ups_last_test_result    : " (Convert_ups_last_test_result -SNMPValue $AllSNMPData.ups_last_test_result)
+                Write-Host "ups_last_test_performed : " (Convert_ups_last_test_result -SNMPValue $AllSNMPData.ups_last_test_performed)
+                $ErrorCount++
             }            
+            #>
         }    
     }
     catch {
@@ -301,6 +385,8 @@ foreach ($IPAdress in $IPAdressList)
         Write-Host "ups_battery_capacity    : " ($AllSNMPData.ups_battery_capacity) "%"
         Write-Host "ups_output_load         : " ($AllSNMPData.ups_output_load) "%"
         Write-Host "ups_Output_Status       : " (Convert_ups_output_status -SNMPValue $AllSNMPData.ups_Output_Status)
+        Write-Host "ups_last_test_result    : " (Convert_ups_last_test_result -SNMPValue $AllSNMPData.ups_last_test_result)
+        Write-Host "ups_last_test_performed : " (Convert_ups_last_test_performed -SNMPValue $AllSNMPData.ups_last_test_performed)
         Write-Host "-----------------------------------------"
     }
     Write-Host ""

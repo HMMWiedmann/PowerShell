@@ -1,1 +1,1 @@
-Get-HotFix
+Get-HotFix | Select-Object -Property Description,HotFixID,InstalledOn
