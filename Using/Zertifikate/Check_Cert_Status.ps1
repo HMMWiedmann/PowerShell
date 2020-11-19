@@ -37,7 +37,7 @@ foreach ($url in $urls)
  
     if ($certExpiresIn -gt $minimumCertAgeDays)
     {
-        Write-Host "Zertifikat fuer $url laeuft in $certExpiresIn Tagen aus [$expiration]"
+        Write-Host "$certExpiresIn Tage fuer $url : [$expiration]"
     }
     else
     {
@@ -47,13 +47,4 @@ foreach ($url in $urls)
     Remove-Variable req
     Remove-Variable expiration
     Remove-Variable certExpiresIn
-}
-
-if($errorcounter -eq 0)
-{
-    exit 0
-}
-else
-{
-    exit 1001
 }

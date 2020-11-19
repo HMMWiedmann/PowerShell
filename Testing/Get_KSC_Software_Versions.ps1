@@ -1,1 +1,0 @@
-Get-CimInstance -ClassName Win32_Product | Where-Object -Property Name -like "*kaspersky*" | Where-Object name -notlike "*plug*" | Select-Object  Name,Version | Format-Table -AutoSize
