@@ -6,9 +6,9 @@
 <# Todo
     - Softwareversion QNAP, Netgear, Synology
     - Sofwareversionscheck auf aktualität
-    - eventuell Modelle einpflegen
 #>
 
+#region hilfsfunktionen
 function Convert_hdd_status_to_text
 {
     param (
@@ -39,6 +39,7 @@ function Convert_hdd_status_to_text
         }
     }
 }
+#endregion
 
 [int]$errorcount = 0
 
@@ -106,6 +107,7 @@ foreach ($IPAdress in $IPAdressList)
 
     $AllSNMPData = @{}
 
+    #region get disk and volume count
     try 
     {
         [int]$DiskCount = (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.10.0" -Community $CommunityString -Version V2).Data
@@ -116,15 +118,17 @@ foreach ($IPAdress in $IPAdressList)
         Write-Host $PSItem.Exception.Message
         $ErrorCount++
         Exit 1001
-    }        
+    }
+    #endregion
 
-    # System Infos
+    #region System Infos
     $AllSNMPData.Add("system_hostname", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.13.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
     $AllSNMPData.Add("system_model", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.12.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
     # $AllSNMPData.Add("system_cpu_usage", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.1.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
     $AllSNMPData.Add("system_temperature", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.6.0" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
+    #endregion
 
-    # HDD Infos
+    #region HDD Infos
     $AllSNMPData.Add("hdd_1_smart_info", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.11.1.7.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
     $AllSNMPData.Add("hdd_1_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.11.1.4.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
 
@@ -146,12 +150,13 @@ foreach ($IPAdress in $IPAdressList)
             Write-Host "Es gibt vermutlich mehr als vier Disks"
         }
     }
+    #endregion
 
-    # Volume Infos
+    #region Volume Infos
     $AllSNMPData.Add("volume_1_free_size_in_MB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.17.1.5.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
     $AllSNMPData.Add("volume_1_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.17.1.6.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
     $AllSNMPData.Add("volume_1_total_size_in_MB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.17.1.4.1" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
-
+    
     if ($VolumeCount -ge 2) 
     {
         $AllSNMPData.Add("volume_2_free_size_in_MB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.17.1.5.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
@@ -173,11 +178,33 @@ foreach ($IPAdress in $IPAdressList)
             $AllSNMPData.Add("volume_2_total_size_in_MB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.4.1.1.1.2.3.2.1.3.2" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
         }
     }
-    elseif ($VolumeCount -gt 2)
+    if ($VolumeCount -ge 3) 
+    {
+        $AllSNMPData.Add("volume_3_free_size_in_MB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.17.1.5.3" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
+        $AllSNMPData.Add("volume_3_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.2.17.1.6.3" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
+        $AllSNMPData.Add("volume_3_total_size_in_MB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.3.17.1.4.3" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
+        if ($AllSNMPData.volume_3_free_size_in_MB -like "*object*" -or $AllSNMPData.volume_3_free_size_in_MB -like "*instance*") 
+        {
+            $AllSNMPData.Remove("volume_3_free_size_in_MB")
+            $AllSNMPData.Add("volume_3_free_size_in_MB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.4.1.1.1.2.3.2.1.4.3" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
+        }
+        if ($AllSNMPData.volume_3_status -like "*object*" -or $AllSNMPData.volume_3_status -like "*instance*") 
+        {
+            $AllSNMPData.Remove("volume_3_status")
+            $AllSNMPData.Add("volume_3_status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.4.1.1.1.2.3.2.1.5.3" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
+        }
+        if ($AllSNMPData.volume_3_total_size_in_MB -like "*object*" -or $AllSNMPData.volume_3_total_size_in_MB -like "*instance*") 
+        {
+            $AllSNMPData.Remove("volume_3_total_size_in_MB")
+            $AllSNMPData.Add("volume_3_total_size_in_MB", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.24681.1.4.1.1.1.2.3.2.1.3.3" -Community $CommunityString -Version V2 -ErrorAction SilentlyContinue).Data)
+        }
+    }
+    if ($VolumeCount -gt 3)
     {
         Write-Host "Es gibt vermutlich mehr als zwei Volumen, bitte pruefen"
         $ErrorCount++
     }
+    #endregion
 
     if ($null -eq $AllSNMPData) 
     {
@@ -185,6 +212,8 @@ foreach ($IPAdress in $IPAdressList)
         $ErrorCount++
         Exit 1001
     }
+
+    #region check values
     try 
     {
         # HDD Info Check
@@ -236,8 +265,7 @@ foreach ($IPAdress in $IPAdressList)
                 $ErrorCount++
             }
         }
-        #>
-        
+        #>        
         if ($null -ne $AllSNMPData.system_temperature) 
         {
             if ([int32]$AllSNMPData.system_temperature -gt 50) 
@@ -266,7 +294,7 @@ foreach ($IPAdress in $IPAdressList)
             $ErrorCount++
         }
 
-        if ($VolumeCount -eq 2) 
+        if ($VolumeCount -ge 2) 
         {
             if ($AllSNMPData.volume_2_total_size_in_MB -notlike "*object*" -and $AllSNMPData.volume_2_total_size_in_MB -notlike "*Instance*")
             {
@@ -286,6 +314,27 @@ foreach ($IPAdress in $IPAdressList)
                 $ErrorCount++
             }
         }
+        if ($VolumeCount -ge 3) 
+        {
+            if ($AllSNMPData.volume_3_total_size_in_MB -notlike "*object*" -and $AllSNMPData.volume_3_total_size_in_MB -notlike "*Instance*")
+            {
+                if ($AllSNMPData.volume_3_free_size_in_GB -notlike "*object*" -and $AllSNMPData.volume_3_free_size_in_GB -notlike "*Instance*")
+                {
+                    $AvailableSpaceVol3 = ($AllSNMPData.volume_3_free_size_in_MB / $AllSNMPData.volume_3_total_size_in_MB * 100)
+                    if ([int64]$AllSNMPData.volume_3_free_size_in_MB -lt 209715200 -and $AvailableSpaceVol3 -lt 20) 
+                    {
+                        Write-Host "Volumen 3 ist fast voll"
+                        $ErrorCount++
+                    }       
+                }
+            }
+            if ($AllSNMPData.volume_3_status -ne "Ready") 
+            {
+                Write-Host "volume_3_status hat einen Fehler gemeldet"
+                $ErrorCount++
+            }
+        }
+
     }    
     catch {
         Write-Host $PSItem.Exception.Message
@@ -296,11 +345,13 @@ foreach ($IPAdress in $IPAdressList)
         Write-Host ""
         Write-Host ""
     }     
+    #endregion
 
     #region Daten ausgeben
     Write-Host "-----------------------------------------"
     Write-Host "system_hostname       : " ($AllSNMPData.system_hostname)
     # Write-Host "system_cpu_usage      : " ($AllSNMPData.system_cpu_usage)
+    Write-Host "system_ipadress:      : " $IPAdress
     Write-Host "system_temperature    : " ($AllSNMPData.system_temperature)
     Write-Host "system_model          : " ($AllSNMPData.system_model)
     Write-Host "system_anzahl_disks   : " $DiskCount
@@ -334,9 +385,9 @@ foreach ($IPAdress in $IPAdressList)
             Write-Host "volume_1_remaining_size_in_% : " ("{0:N2}" -f $AvailableSpaceVol1)
         }
     }
-    Write-Host "volume_1_status : " ($AllSNMPData.volume_1_status)
+    Write-Host "volume_1_status              : " ($AllSNMPData.volume_1_status)
     Write-Host "-----------------------------------------"
-    if ($VolumeCount -eq 2)
+    if ($VolumeCount -ge 2)
     {        
         if ($AllSNMPData.volume_2_free_size_in_MB -notlike "*object*" -and $AllSNMPData.volume_2_free_size_in_MB -notlike "*object*") 
         {
@@ -350,16 +401,41 @@ foreach ($IPAdress in $IPAdressList)
             {
                 Write-Host "Volume 2 kann nicht ausgelesen werden"
                 $ErrorCount++
-            }     
+            }
         }
         else
         {
             Write-Host "Volume 2 kann nicht ausgelesen werden"
             $ErrorCount++
         }
-        Write-Host "volume_2_status : " ($AllSNMPData.volume_2_status)
+        Write-Host "volume_2_status              : " ($AllSNMPData.volume_2_status)
         Write-Host "-----------------------------------------"
     }
+    if ($VolumeCount -ge 3)
+    {        
+        if ($AllSNMPData.volume_3_free_size_in_MB -notlike "*object*" -and $AllSNMPData.volume_3_free_size_in_MB -notlike "*object*") 
+        {
+            if ($AllSNMPData.volume_3_total_size_in_MB -notlike "*Instance*" -and $AllSNMPData.volume_3_total_size_in_MB -notlike "*Instance*") 
+            {
+                Write-Host "volume_3_free_size_in_GB     : " ("{0:N2}" -f ($AllSNMPData.volume_3_free_size_in_MB /1mb))
+                Write-Host "volume_3_total_size_in_GB    : " ("{0:N2}" -f ($AllSNMPData.volume_3_total_size_in_MB /1mb))                    
+                Write-Host "volume_3_remaining_size_in_% : " ("{0:N2}" -f $AvailableSpaceVol3)
+            }
+            else 
+            {
+                Write-Host "Volume 3 kann nicht ausgelesen werden"
+                $ErrorCount++
+            }
+        }
+        else
+        {
+            Write-Host "Volume 3 kann nicht ausgelesen werden"
+            $ErrorCount++
+        }
+        Write-Host "volume_3_status              : " ($AllSNMPData.volume_2_status)
+        Write-Host "-----------------------------------------"
+    }
+
     Write-Host ""
     Write-Host ""
     #endregion

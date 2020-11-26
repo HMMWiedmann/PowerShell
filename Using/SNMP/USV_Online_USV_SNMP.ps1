@@ -248,9 +248,9 @@ foreach ($IPAdress in $IPAdressList)
         $AllSNMPData.Add("ups_battery_capacity", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.1356.1.2.2.0" -Community $CommunityString -UDPport $SNMPPort -Version V2 -ErrorAction SilentlyContinue).Data)
         $AllSNMPData.Add("ups_output_load", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.1356.1.4.2.0" -Community $CommunityString -UDPport $SNMPPort -Version V2 -ErrorAction SilentlyContinue).Data)
         $AllSNMPData.Add("ups_Output_Status", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.1356.1.4.1.0" -Community $CommunityString -UDPport $SNMPPort -Version V2 -ErrorAction SilentlyContinue).Data)
+        $AllSNMPData.Add("ups_battery_run_time_remaining", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.1356.1.2.5.0" -Community $CommunityString -UDPport $SNMPPort -Version V2 -ErrorAction SilentlyContinue).Data)
         $AllSNMPData.Add("ups_last_test_result", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.1356.1.5.3.0" -Community $CommunityString -UDPport $SNMPPort -Version V2 -ErrorAction SilentlyContinue).Data)
         $AllSNMPData.Add("ups_last_test_performed", (Get-SnmpData -IP $IPAdress -OID ".1.3.6.1.4.1.1356.1.5.2.0" -Community $CommunityString -UDPport $SNMPPort -Version V2 -ErrorAction SilentlyContinue).Data)
-
     }
     else 
     {
@@ -268,12 +268,7 @@ foreach ($IPAdress in $IPAdressList)
         {
             Write-Host (Convert_ups_output_status -SNMPValue $AllSNMPData.ups_battery_status)
             $Errorcount++
-        }
-        if ($AllSNMPData.ups_battery_temperature -eq "-9999")
-        {
-            Write-Host "Es ist vermutlich das falsche Modell angegeben."
-            Write-Host "ups_battery_temperature : " ($AllSNMPData.ups_battery_temperature)            
-        }
+        }        
         elseif ($AllSNMPData.ups_battery_temperature -notlike "*object*" -and $AllSNMPData.ups_battery_temperature -notlike "*instance*") 
         {
             if ([int32]$AllSNMPData.ups_battery_temperature -gt 45)
@@ -300,17 +295,25 @@ foreach ($IPAdress in $IPAdressList)
                     $Errorcount++
                 }
             }
+            <#
             if ($AllSNMPData.ups_test_results_summary -ne "1")
             {   
                 Write-Host "Ein Test hat einen Fehler. Details:`n" (Convert_ups_test_results_summary -SNMPValue $AllSNMPData.ups_test_results_summary)
                 $Errorcount++
+            }
+            #>
+            if ($AllSNMPData.ups_battery_temperature -eq "-9999")
+            {
+                Write-Host "Es ist vermutlich das falsche Modell angegeben oder die Software benötigt ein Update."
+                Write-Host "ups_battery_temperature : " ($AllSNMPData.ups_battery_temperature)
+                # $ErrorCount++
             }
         }    
         elseif ($UPSMAN -eq $true) 
         {
             if ($AllSNMPData.ups_battery_capacity -eq "-9999")
             {
-                Write-Host "Es ist vermutlich das falsche Modell angegeben."
+                Write-Host "Es ist vermutlich das falsche Modell angegeben oder die Software benötigt ein Update"
                 Write-Host "ups_battery_capacity : " ($AllSNMPData.ups_battery_capacity) "%"
                 $Errorcount++
             }
@@ -334,6 +337,12 @@ foreach ($IPAdress in $IPAdressList)
             {
                 Write-Host (Convert_ups_output_status -SNMPValue $AllSNMPData.ups_Output_Status)
                 $Errorcount++
+            }
+            if ($AllSNMPData.ups_battery_temperature -eq "-9999" -and $AllSNMPData.ups_ident_model_name -notlike "*ZINTO E 1500*")
+            {
+                Write-Host "Es ist vermutlich das falsche Modell angegeben oder die Software benötigt ein Update."
+                Write-Host "ups_battery_temperature : " ($AllSNMPData.ups_battery_temperature)
+                # $ErrorCount++
             }
             <#
             if ($AllSNMPData.ups_last_test_result -ne "1")
@@ -363,7 +372,7 @@ foreach ($IPAdress in $IPAdressList)
     #region Daten ausgeben
     if ($SNMPAdapter -eq $true)
     {
-        Write-Host "-----------------------------------------"
+        Write-Host "--------------------------------------------------"
         Write-Host "ups_battery_status              : " (Convert_ups_battery_status -SNMPValue $AllSNMPData.ups_battery_status)
         Write-Host "ups_battery_temperature         : " ($AllSNMPData.ups_battery_temperature)
         Write-Host "ups_estimated_charge_remaining  : " ($AllSNMPData.ups_estimated_charge_remaining) "%"
@@ -374,20 +383,21 @@ foreach ($IPAdress in $IPAdressList)
         Write-Host "ups_test_results_detail         : " ($AllSNMPData.ups_test_results_detail)
         Write-Host "ups_test_start_time             : " ($AllSNMPData.ups_test_start_time)
         Write-Host "ups_test_elapsed_time           : " ($AllSNMPData.ups_test_elapsed_time)
-        Write-Host "-----------------------------------------"
+        Write-Host "--------------------------------------------------"
     }
     elseif ($UPSMAN -eq $true) 
     {
-        Write-Host "-----------------------------------------"
-        Write-Host "ups_ident_model_name    : " ($AllSNMPData.ups_ident_model_name)
-        Write-Host "ups_battery_status      : " (Convert_ups_battery_status -SNMPValue $AllSNMPData.ups_battery_status)
-        Write-Host "ups_Battery_Temperature : " ($AllSNMPData.ups_Battery_Temperature)
-        Write-Host "ups_battery_capacity    : " ($AllSNMPData.ups_battery_capacity) "%"
-        Write-Host "ups_output_load         : " ($AllSNMPData.ups_output_load) "%"
-        Write-Host "ups_Output_Status       : " (Convert_ups_output_status -SNMPValue $AllSNMPData.ups_Output_Status)
-        Write-Host "ups_last_test_result    : " (Convert_ups_last_test_result -SNMPValue $AllSNMPData.ups_last_test_result)
-        Write-Host "ups_last_test_performed : " (Convert_ups_last_test_performed -SNMPValue $AllSNMPData.ups_last_test_performed)
-        Write-Host "-----------------------------------------"
+        Write-Host "--------------------------------------------------"
+        Write-Host "ups_ident_model_name            : " ($AllSNMPData.ups_ident_model_name)
+        Write-Host "ups_battery_status              : " (Convert_ups_battery_status -SNMPValue $AllSNMPData.ups_battery_status)
+        Write-Host "ups_Battery_Temperature         : " ($AllSNMPData.ups_Battery_Temperature)
+        Write-Host "ups_battery_capacity            : " ($AllSNMPData.ups_battery_capacity) "%"
+        Write-Host "ups_output_load                 : " ($AllSNMPData.ups_output_load) "%"
+        Write-Host "ups_Output_Status               : " (Convert_ups_output_status -SNMPValue $AllSNMPData.ups_Output_Status)
+        Write-Host "ups_last_test_result            : " (Convert_ups_last_test_result -SNMPValue $AllSNMPData.ups_last_test_result)
+        Write-Host "ups_last_test_performed         : " (Convert_ups_last_test_performed -SNMPValue $AllSNMPData.ups_last_test_performed)
+        Write-Host "ups_battery_run_time_remaining  : " ([int32]$AllSNMPData.ups_battery_run_time_remaining / 60) "min"
+        Write-Host "--------------------------------------------------"
     }
     Write-Host ""
     Write-Host ""

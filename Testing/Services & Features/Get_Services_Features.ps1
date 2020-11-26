@@ -8,7 +8,11 @@ if ($CheckExchangeSnapin)
 
 # Veeam
 # Backup & Replication
+
+
 # Agent
+
+
 
 # Windows Features
 $InstalledFeatures = Get-WindowsFeature | Where-Object -Property installed
