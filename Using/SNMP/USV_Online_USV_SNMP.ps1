@@ -61,7 +61,8 @@ function Convert_ups_test_results_summary
             return "noTestInitiated"
         }
         Default {
-            "Error: Value not found"
+            "Error : Value not defined"
+            "Value : $SNMPValue"
         }
     }
 }
@@ -91,7 +92,8 @@ function Convert_ups_output_status
             return "shutdown"
         }
         Default {
-            "Error: Value not found"
+            "Error : Value not defined"
+            "Value : $SNMPValue"
         }
     }
 }
@@ -118,7 +120,8 @@ function Convert_ups_last_test_result
             return "notSupported"
         }
         Default {
-            "Error: Value not found"
+            "Error : Value not defined"
+            "Value : $SNMPValue"
         }
     }
 }
@@ -148,7 +151,8 @@ function Convert_ups_last_test_performed
             return "selfTest"
         }
         Default {
-            "Error: Value not found"
+            "Error : Value not defined"
+            "Value : $SNMPValue"
         }
     }
 }

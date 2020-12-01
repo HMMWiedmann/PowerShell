@@ -219,7 +219,7 @@ foreach ($IPAdress in $IPAdressList)
         # HDD Info Check
         if ($AllSNMPData.hdd_1_smart_info -ne "GOOD" -or $AllSNMPData.hdd_1_status -ne "0") 
         {
-            Write-Host "HDD 1 hat einen Fehler"
+            Write-Host "HDD1 hat einen Fehler"
             $ErrorCount++
         }
         if ($DiskCount -ge 2)
@@ -358,21 +358,21 @@ foreach ($IPAdress in $IPAdressList)
     Write-Host "system_anzahl_volumen : " $VolumeCount
     Write-Host "-----------------------------------------"
     Write-Host "hdd_1_smart_info : " ($AllSNMPData.hdd_1_smart_info)
-    Write-Host "hdd_1_status     : " (Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_1_status)
+    Write-Host "hdd_1_status     : " (Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_1_status -ErrorAction SilentlyContinue)
     Write-Host "-----------------------------------------"
     if ($DiskCount -ge 2) 
     {
         Write-Host "hdd_2_smart_info : " ($AllSNMPData.hdd_2_smart_info)
-        Write-Host "hdd_2_status     : " (Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_2_status)
+        Write-Host "hdd_2_status     : " (Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_2_status -ErrorAction SilentlyContinue)
         Write-Host "-----------------------------------------"
 
         if ($DiskCount -eq 4)
         {
             Write-Host "hdd_3_smart_info : " ($AllSNMPData.hdd_3_smart_info)
-            Write-Host "hdd_3_status     : " (Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_3_status)
+            Write-Host "hdd_3_status     : " (Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_3_status -ErrorAction SilentlyContinue)
             Write-Host "-----------------------------------------"
             Write-Host "hdd_4_smart_info : " ($AllSNMPData.hdd_4_smart_info)
-            Write-Host "hdd_4_status     : " (Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_4_status)
+            Write-Host "hdd_4_status     : " (Convert_hdd_status_to_text -SNMPValue $AllSNMPData.hdd_4_status -ErrorAction SilentlyContinue)
             Write-Host "-----------------------------------------"
         }    
     }
