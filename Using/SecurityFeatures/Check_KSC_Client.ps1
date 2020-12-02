@@ -19,13 +19,13 @@ if ($KSC_Client_Service)
     $KESInstalledVersionArray = $KSC_Client_Version.FileVersion.Split(".")
     $KESRequiredVersionArray = $MinKESAllowedVersion.Split(".")
 
-    if ([int]$KESInstalledVersionArray[0] -lt [int]$KESRequiredVersionArray[0].Replace('*',0))
+    if ([int]$KESInstalledVersionArray[0] -ge [int]$KESRequiredVersionArray[0])
     {
-        if ([int]$KESInstalledVersionArray[1] -lt [int]$KESRequiredVersionArray[1].Replace('*',0))
+        if ([int]$KESInstalledVersionArray[1] -ge [int]$KESRequiredVersionArray[1])
         {
-            if ([int]$KESInstalledVersionArray[2] -lt [int]$KESRequiredVersionArray[2].Replace('*',0))
+            if ([int]$KESInstalledVersionArray[2] -ge [int]$KESRequiredVersionArray[2])
             {
-                if ([int]$KESInstalledVersionArray[3] -lt [int]$KESRequiredVersionArray[3].Replace('*',0))
+                if ([int]$KESInstalledVersionArray[3] -ge [int]$KESRequiredVersionArray[3])
                 {
     
                 }
@@ -49,13 +49,13 @@ if ($KSC_Client_Service)
     $AgentInstalledVersionArray = $KSC_Agent_Version.FileVersion.Split(".")
     $AgentRequiredVersionArray = $MinAgentVersion.Split(".")
 
-    if ([int]$AgentInstalledVersionArray[0] -lt [int]$AgentRequiredVersionArray[0].Replace('*',0))
+    if ([int]$AgentInstalledVersionArray[0] -ge [int]$AgentRequiredVersionArray[0])
     {
-        if ([int]$AgentInstalledVersionArray[1] -lt [int]$AgentRequiredVersionArray[1].Replace('*',0))
+        if ([int]$AgentInstalledVersionArray[1] -ge [int]$AgentRequiredVersionArray[1])
         {
-            if ([int]$AgentInstalledVersionArray[2] -lt [int]$AgentRequiredVersionArray[2].Replace('*',0))
+            if ([int]$AgentInstalledVersionArray[2] -ge [int]$AgentRequiredVersionArray[2])
             {
-                if ([int]$AgentInstalledVersionArray[3] -lt [int]$AgentRequiredVersionArray[3].Replace('*',0))
+                if ([int]$AgentInstalledVersionArray[3] -ge [int]$AgentRequiredVersionArray[3])
                 {
     
                 }

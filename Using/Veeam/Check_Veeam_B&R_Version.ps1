@@ -19,13 +19,13 @@ if ($Veeam_BR_Service)
     $InstalledVersionArray = $Veeam_BR_Service_Version.FileVersion.Split(".")
     $RequiredVersionArray = $MinAgentVersion.Split(".")
 
-    if ([int]$InstalledVersionArray[0] -lt [int]$RequiredVersionArray[0].Replace('*',0))
+    if ([int]$InstalledVersionArray[0] -ge [int]$RequiredVersionArray[0])
     {
-        if ([int]$InstalledVersionArray[1] -lt [int]$RequiredVersionArray[1].Replace('*',0))
+        if ([int]$InstalledVersionArray[1] -ge [int]$RequiredVersionArray[1])
         {
-            if ([int]$InstalledVersionArray[2] -lt [int]$RequiredVersionArray[2].Replace('*',0))
+            if ([int]$InstalledVersionArray[2] -ge [int]$RequiredVersionArray[2])
             {
-                if ([int]$InstalledVersionArray[3] -lt [int]$RequiredVersionArray[3].Replace('*',0))
+                if ([int]$InstalledVersionArray[3] -ge [int]$RequiredVersionArray[3])
                 {
     
                 }
